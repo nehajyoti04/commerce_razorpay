@@ -1,11 +1,24 @@
 <?php
-
 use Razorpay\Api\Api;
+// use Drupal\Razorpay\Api;
+// namespace  Razorpay\Api;
+// use Razorpay\Api;
+// namespace Razorpay\Api;
+// function theme_preprocess_html(&$var) {
+//       $script = array(
+//         '#tag' => 'script',
+//         '#attributes' => array('type' => 'text/javascript'),
+//         '#value' => 'Add your javascript here',
+//        );
+//        drupal_add_html_head($script, 'script');
+//     }
+
 
 /**
  * Implements hook_menu().
  */
 function commerce_razorpay_menu() {
+
 $items['razorpay-checkout'] = array(
     'title' => 'Administration menu',
     'description' => 'Adjust administration menu settings.',
@@ -14,7 +27,6 @@ $items['razorpay-checkout'] = array(
     'access arguments' => array('administer site configuration'),
     'file' => 'commerce_razorpay.checkout.inc',
   );
-
 return $items;
 }
 
@@ -64,6 +76,90 @@ function razorpay_payment_all_refunds($payment_id = 'pay_29QQoUBi66xm2f', $from 
  * Create an order.
  * @return [type] [description]
  */
-function order() {
+function create_an_order() {
 
+// $library = libraries_load('razorpay-php');
+// dpm("library");
+// dpm($library);
+$name = 'razorpay-php';
+// if (($library = libraries_load($name)) && !empty($library['loaded'])) {
+
+  $fb_lib_path = function_exists('libraries_get_path') ? libraries_get_path('razorpay-php') : 'sites/all/libraries/razorpay-php';
+
+  require '/var/www/npro/libraries/razorpay-php/Razorpay.php';
+  // require DRUPAL_ROOT ."/". $fb_lib_path.'/Razorpay.php';
+  // require(libraries_get_path('razorpay-php') . '/Razorpay.php');
+
+  // @include DRUPAL_ROOT ."/". $fb_lib_path.'/Razorpay.php';
+  //
+  //
+  // require_once DRUPAL_ROOT ."/". $fb_lib_path.'/Razorpay.php';
+  // require_once(libraries_get_path('razorpay-php') . '/src/Api.php');
+  // include('/var/www/npro/libraries/razorpay-php/src/Api.php');
+// }
+//  $fb_platform = $fb_lib_path . '/src/Api.php';
+ // watchdog('commerce_razorpay fb platform', $fb_platform);
+ // dpm("fb platform");
+ // dpm($fb_platform);
+ // include($fb_lib_path);
+ // include($fb_lib_path.'/Razorpay.php');
+ // include('sites/all/libraries/razorpay-php/Razorpay.php');
+ // include($fb_lib_path.'/src/Api.php');
+ // libraries_load($fb_lib_path);
+ // require_once (libraries_get_path('razorpay-php') . '/src/Api.php');
+ // include_once($fb_lib_path);
+ // include_once('/Applications/MAMP/bin/php/php5.6.10/lib/php');
+ // require_once DRUPAL_ROOT ."/".$fb_lib_path;
+ // libraries_load('razorpay-php');
+ // require($fb_lib_path.'/src/Api.php');
+ // drupal_add_library('commerce_razorpay', 'razorpay-php', TRUE);
+ // watchdog('commerce_razorpay - api', !class_exists('Api'));
+ // watchdog('commerce_razorpay - include', !@include($fb_platform));
+
+ // require DRUPAL_ROOT ."/". $fb_lib_path.'/Razorpay.php';
+// require_once DRUPAL_ROOT ."/". $fb_lib_path.'/src/Api.php';
+// $api = new Api('razorpay-php', 'sites/all/libraries');
+$api = new Api('rzp_test_ipkgumBJtJrvd1', 'AYnJYk0QEcW0LKJLuARDQ3Ti');
+$order = $api->order->create(array('amount' => 100, "currency" => "INR", "receipt" => "test_1"));
+// print '<pre>'; print_r("order"); print '</pre>';
+//      print '<pre>'; print_r($order); print '</pre>';exit;
+// print '<pre>'; print_r("api"); print '</pre>';
+//      print '<pre>'; print_r($api); print '</pre>';exit;
+
+// $api = new Api('rzp_test_26ccbdbfe0e84b', '69b2e24411e384f91213f22a');
+     // $order = $api->order->create(array('amount' => 100, "currency", "INR", "receipt", "test_1", "payment_capture", false));
+     // print '<pre>'; print_r("order"); print '</pre>';
+     // print '<pre>'; print_r($order); print '</pre>';exit;
+     return $order;
+
+
+ try {
+     // if (!class_exists('Api') && !@include($fb_platform)) {
+     if(!@include($fb_platform)){
+      //show error
+      watchdog('commerce_razorpay', 'class does not exist');
+      return NULL;
+     }
+     // $fb = new Facebook(array(
+     //   'appId' => $appId,
+     //   'secret' => $secret,
+     //   'cookie' => $cookie));
+     $api = new Api('rzp_test_26ccbdbfe0e84b', '69b2e24411e384f91213f22a');
+     $order = $api->order->create(array('amount' => 100, "currency", "INR", "receipt", "test_1", "payment_capture", false));
+     // print '<pre>'; print_r("order"); print '</pre>';
+     // print '<pre>'; print_r($order); print '</pre>';exit;
+     return $order;
+ }
+ catch (Exception $e) {}
+
+
+// drupal_add_library('razorpay-php', 'Razorpay.php');
+// drupal_add_library('razorpay-php', 'Api.php');
+// $api = new Api('rzp_test_26ccbdbfe0e84b', '69b2e24411e384f91213f22a');
+$order = $api->order->create(array('amount' => 100, "currency", "INR", "receipt", "test_1", "payment_capture", false));
+
+
+// $refund = $payment->create();
+
+return $order;
 }
