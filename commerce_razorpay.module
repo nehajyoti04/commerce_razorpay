@@ -37,6 +37,26 @@ $items['capture-payment'] = array(
 return $items;
 }
 
+/**
+ * Implements hook_commerce_payment_method_info().
+ */
+function commerce_razorpay_commerce_payment_method_info() {
+  // $icon = _commerce_payumoney_icons();
+  $display_title = t('Razorpay');
+  $payment_methods = array();
+  $payment_methods['commerce_razorpay'] = array(
+    'title' => t("RazorPay"),
+    'display_title' => $display_title,
+    'short_title' => 'RazorPay Payment Gateway',
+    'description' => t("RazorPay Payment Gateway"),
+    'terminal' => FALSE,
+    'offsite' => TRUE,
+    'offsite_autoredirect' => TRUE,
+  );
+  return $payment_methods;
+}
+
+
 function commerce_razorpay_capture_payment($payment_id = '') {
   $payment_id = $_GET['payment_id'];
   $amount = $_GET['amount'];
@@ -60,7 +80,8 @@ function get_payments($count = 2, $skip = 1, $from = 1400826740) {
 function capture_payment($payment_id, $amount = 100) {
   $fb_lib_path = function_exists('libraries_get_path') ? libraries_get_path('razorpay-php') : 'sites/all/libraries/razorpay-php';
 
-  require '/var/www/npro/libraries/razorpay-php/Razorpay.php';
+  require 'libraries/razorpay-php/Razorpay.php';
+  // require '/var/www/npro/libraries/razorpay-php/Razorpay.php';
 
   $api = new Api('rzp_test_ipkgumBJtJrvd1', 'AYnJYk0QEcW0LKJLuARDQ3Ti');
 
