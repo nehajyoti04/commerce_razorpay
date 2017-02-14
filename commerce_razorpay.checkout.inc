@@ -52,7 +52,25 @@ var options = {
     "description": "Purchase Description",
     "image": "/your_logo.png",
     "handler": function (response){
+
         alert(response.razorpay_payment_id);
+        // Capture Payment here.
+        window.location.href = "/capture-payment?payment_id="+response.razorpay_payment_id+"&amount=100";
+
+
+        // var request = require("request");
+        // request({
+        //   method: "POST",
+        //   url: "https://rzp_test_ipkgumBJtJrvd1:AYnJYk0QEcW0LKJLuARDQ3Ti@api.razorpay.com/v1/payments/" +response.razorpay_payment_id + "/capture",
+        //   form: {
+        //     amount: 500
+        //   }
+        // }, function (error, response, body) {
+        //   console.log("Status:", response.statusCode);
+        //   console.log("Headers:", JSON.stringify(response.headers));
+        //   console.log("Response:", body);
+        // });
+
     },
     "prefill": {
         "name": "Neha",

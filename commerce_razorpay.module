@@ -27,10 +27,24 @@ $items['razorpay-checkout'] = array(
     'access arguments' => array('administer site configuration'),
     'file' => 'commerce_razorpay.checkout.inc',
   );
+
+$items['capture-payment'] = array(
+    'title' => 'Capture Payement',
+    'description' => 'Adjust administration menu settings.',
+    'page callback' => 'commerce_razorpay_capture_payment',
+    'access arguments' => array('administer site configuration'),
+  );
 return $items;
 }
 
+function commerce_razorpay_capture_payment($payment_id = '') {
+  $payment_id = $_GET['payment_id'];
+  $amount = $_GET['amount'];
+$payment = capture_payment($payment_id, $amount);
+print '<pre>'; print_r("payment"); print '</pre>';
+print '<pre>'; print_r($payment); print '</pre>'; exit;
 
+}
 
 function get_payments($count = 2, $skip = 1, $from = 1400826740) {
   $api = new Api('rzp_test_ipkgumBJtJrvd1', 'AYnJYk0QEcW0LKJLuARDQ3Ti');
@@ -43,11 +57,15 @@ function get_payments($count = 2, $skip = 1, $from = 1400826740) {
   $payments = $api->payment->all($params);
 }
 
-function capture_payment($payment_id) {
+function capture_payment($payment_id, $amount = 100) {
+  $fb_lib_path = function_exists('libraries_get_path') ? libraries_get_path('razorpay-php') : 'sites/all/libraries/razorpay-php';
+
+  require '/var/www/npro/libraries/razorpay-php/Razorpay.php';
+
   $api = new Api('rzp_test_ipkgumBJtJrvd1', 'AYnJYk0QEcW0LKJLuARDQ3Ti');
 
 $payment = $api->payment->fetch($payment_id);
-$payment->capture(array('amount' => 500));
+$payment->capture(array('amount' => $amount));
 return $payment;
 }
 /**
