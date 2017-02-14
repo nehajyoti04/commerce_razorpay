@@ -53,7 +53,7 @@ var options = {
     "image": "/your_logo.png",
     "handler": function (response){
 
-        alert(response.razorpay_payment_id);
+        // alert(response.razorpay_payment_id);
         // Capture Payment here.
         window.location.href = "/capture-payment?payment_id="+response.razorpay_payment_id+"&amount=100";
 
