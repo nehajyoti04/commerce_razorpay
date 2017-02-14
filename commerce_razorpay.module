@@ -13,6 +13,35 @@ use Razorpay\Api\Api;
 //        drupal_add_html_head($script, 'script');
 //     }
 
+/**
+ * Administration forms form payment method.
+ */
+function commerce_razorpay_settings_form($settings = NULL) {
+  $form = array();
+  $settings = (array) $settings + array(
+    'key_id' => '',
+    'key_secret' => '',
+    'url' => '',
+  );
+  $form['key_id'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Key ID'),
+    '#default_value' => $settings['key'],
+  );
+  $form['key_secret'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Key Secre'),
+    '#default_value' => $settings['salt'],
+  );
+  $url = array(0 => t('Test'),1 => t('Production'));
+  $form['url'] = array(
+    '#type' => 'radios',
+    '#title' => t('Base URI'),
+    '#options' => $url,
+    '#default_value' => $settings['url'],
+  );
+  return $form;
+}
 
 /**
  * Implements hook_menu().
