@@ -31,9 +31,9 @@ return $items;
 }
 
 
-function get_payments($count = 2, $skip = 1, $from = 1400826740) {
-  $api = new Api('rzp_test_26ccbdbfe0e84b', '69b2e24411e384f91213f22a');
 
+function get_payments($count = 2, $skip = 1, $from = 1400826740) {
+  $api = new Api('rzp_test_ipkgumBJtJrvd1', 'AYnJYk0QEcW0LKJLuARDQ3Ti');
   $params = array(
       'count' => 2,
       'skip'  => 1,
@@ -41,6 +41,14 @@ function get_payments($count = 2, $skip = 1, $from = 1400826740) {
   );
 
   $payments = $api->payment->all($params);
+}
+
+function capture_payment($payment_id) {
+  $api = new Api('rzp_test_ipkgumBJtJrvd1', 'AYnJYk0QEcW0LKJLuARDQ3Ti');
+
+$payment = $api->payment->fetch($payment_id);
+$payment->capture(array('amount' => 500));
+return $payment;
 }
 /**
  * Retrieve a refund of payment by id.
