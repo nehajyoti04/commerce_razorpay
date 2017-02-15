@@ -26,12 +26,12 @@ function commerce_razorpay_settings_form($settings = NULL) {
   $form['key_id'] = array(
     '#type' => 'textfield',
     '#title' => t('Key ID'),
-    '#default_value' => $settings['key'],
+    '#default_value' => $settings['key_id'],
   );
   $form['key_secret'] = array(
     '#type' => 'textfield',
     '#title' => t('Key Secre'),
-    '#default_value' => $settings['salt'],
+    '#default_value' => $settings['key_secret'],
   );
   $url = array(0 => t('Test'),1 => t('Production'));
   $form['url'] = array(
@@ -100,13 +100,20 @@ function get_payments($count = 2, $skip = 1, $from = 1400826740) {
   $params = array(
       'count' => 2,
       'skip'  => 1,
-      'from'  => 1400826740
+      'from'  => 1400826740,
+      'order'
   );
 
   $payments = $api->payment->all($params);
+
 }
 
-function capture_payment($payment_id, $amount = 100) {
+function capture_payment($payment_id, $amount = 100, $order_id = 1) {
+
+  // print '<pre>'; print_r("payment id"); print '</pre>';
+  // print '<pre>'; print_r($_POST['payment_id']); print '</pre>';
+
+  // echo json_encode(array("payment_id"=>$_POST['payment_id']));
   $fb_lib_path = function_exists('libraries_get_path') ? libraries_get_path('razorpay-php') : 'sites/all/libraries/razorpay-php';
 
   require 'libraries/razorpay-php/Razorpay.php';
@@ -116,6 +123,17 @@ function capture_payment($payment_id, $amount = 100) {
 
 $payment = $api->payment->fetch($payment_id);
 $payment->capture(array('amount' => $amount));
+$order_id = $_GET['order_id'];
+// Success URL: checkout/ORDER_ID/payment/return/ORDER_PAYMENT_REDIRECT_KEY
+if($payment->status == 'authorized') {
+  drupal_goto('checkout/'. $order_id . "/payment/return/". $payment_id);
+} else {
+  print '<pre>'; print_r("payment status"); print '</pre>';
+  print '<pre>'; print_r($payment->status); print '</pre>'; exit;
+}
+// Fail URL: checkout/ORDER_ID/payment/back/ORDER_PAYMENT_REDIRECT_KEY
+
+
 return $payment;
 }
 /**
@@ -162,7 +180,8 @@ $name = 'razorpay-php';
 
   $fb_lib_path = function_exists('libraries_get_path') ? libraries_get_path('razorpay-php') : 'sites/all/libraries/razorpay-php';
 
-  require '/var/www/npro/libraries/razorpay-php/Razorpay.php';
+  // require '/var/www/npro/libraries/razorpay-php/Razorpay.php';
+  require 'libraries/razorpay-php/Razorpay.php';
   // require DRUPAL_ROOT ."/". $fb_lib_path.'/Razorpay.php';
   // require(libraries_get_path('razorpay-php') . '/Razorpay.php');
 
@@ -238,4 +257,65 @@ $order = $api->order->create(array('amount' => 100, "currency", "INR", "receipt"
 // $refund = $payment->create();
 
 return $order;
+}
+
+
+
+
+/**
+ * Implements hook_redirect_form().
+ */
+function commerce_razorpay_redirect_form($form, &$form_state, $order, $payment_method) {
+
+  // dpm("hook redirect called");
+  // dpm("order");
+  // dpm($order);
+  // dpm("payment method");
+  // dpm($payment_method);
+  $wrapper = entity_metadata_wrapper('commerce_order', $order);
+  $billing_address = $wrapper->commerce_customer_billing->commerce_customer_address->value();
+
+  // Set all data in array.
+  $data = array(
+    'key' => $payment_method['settings']['key_id'],
+    'amount' => $wrapper->commerce_order_total->amount->value() / 100,
+    'productinfo' => 'Product order ID:' . $order->order_id,
+    'name' => $billing_address['name_line'],
+    'email' => $order->mail,
+    'phone' => $billing_address['pm_phone'],
+    'furl' => url('checkout/' . $order->order_id . '/payment/back/' . $order->data['payment_redirect_key'], array('absolute' => TRUE)),
+    'surl' => url('checkout/' . $order->order_id . '/payment/return/' . $order->data['payment_redirect_key'], array('absolute' => TRUE)),
+  );
+  // Peform phone verification if its all digits otherwise go back.
+  // if (!preg_match('/^\d{10}$/', $data['phone'])) {
+  //   drupal_set_message(t('Phone number should be 10 digit number.'), 'error');
+  //   commerce_payment_redirect_pane_previous_page($order);
+  //   return '';
+  // }
+  // Check if all data are available else generate hash.
+  if (!isset($data['key'])) {
+    drupal_set_message(t('Required Information are not available. Please Try again...'), 'error');
+    commerce_payment_redirect_pane_previous_page($order);
+    return '';
+  }
+  // else {
+
+  // // Redirect URI.
+  // if (($payment_method['settings']['url']) == 1) {
+  //   $url = url('https://secure.payu.in/_payment');
+  // }
+  // else {
+  //   $url = url('https://test.payu.in/_payment');
+  // }
+
+ // capture_payment($payment_id, $amount = 100, $order_id = 1);
+  if (isset($hash)) {
+    $form['#action'] = $url;
+  }
+  else {
+    drupal_set_message(t('Critical Information not generated. Please Try again.'), 'error');
+    commerce_payment_redirect_pane_previous_page($order);
+    return '';
+  }
+  return $form;
 }

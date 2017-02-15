@@ -1,2 +1,181 @@
-//Here is my custom test.js
-console.log("me");
+(function($) {
+  Drupal.behaviors.commerce_razorpay = {
+    attach: function(context, settings) {
+
+
+
+      // jquery extend function
+      // $.extend({
+      //   redirectPost: function(location, args) {
+      //     var form = '';
+      //     $.each(args, function(key, value) {
+      //       console.log("value");
+      //       console.log(value);
+      //       // value = value.split('"').join('\"')
+      //       form += '<input type="hidden" name="' + key + '" value="' + value + '">';
+      //     });
+      //     $('<form action="' + location + '" method="POST">' + form + '</form>').appendTo($(document.body)).submit();
+      //   }
+      // });
+
+
+      var amount = settings.commerce_razorpay.amount;
+      var key = settings.commerce_razorpay.key;
+      var logo = settings.commerce_razorpay.logo;
+      var order_id = settings.commerce_razorpay.order_id;
+      var payment_id = '';
+
+
+
+      // var options = {
+      //   "key": key,
+      //   "amount": amount,
+      //   "name": "Merchant Name",
+      //   "description": "Purchase Description",
+      //   "image": logo,
+      //   "prefill": {
+      //     "name": "Harshil Mathur",
+      //     "email": "harshil@razorpay.com"
+      //   },
+      //   "notes": {
+      //     "address": "Hello World"
+      //   },
+      //   "theme": {
+      //     "color": "#F37254"
+      //   },
+      //   "handler": function(response) {
+      //     payment_id = response.razorpay_payment_id;
+      //   },
+      // };
+
+
+
+
+      // var form = '';
+      // $.each(options, function(key, value) {
+      //   console.log("value");
+      //   console.log(value);
+      //   // value = value.split('"').join('\"')
+      //   form += '<input type="hidden" name="' + key + '" value="' + value + '">';
+      // });
+      // // $('<form action="' + location + '" method="POST">' + form + '</form>').appendTo($(document.body)).submit();
+      // $('<form action="' + location + '" method="POST">' + form + '</form>').appendTo($(document.body));
+
+
+      // var redirect = '/capture-payment?payment_id='
+      // payment_id;
+      // $.redirectPost(redirect, {
+      //   "key": key,
+      //   "amount": amount,
+      //   "name": "Merchant Name",
+      //   "description": "Purchase Description",
+      //   "image": logo,
+      //   "prefill": {
+      //     "name": "Harshil Mathur",
+      //     "email": "harshil@razorpay.com"
+      //   },
+      //   "notes": {
+      //     "address": "Hello World"
+      //   },
+      //   "theme": {
+      //     "color": "#F37254"
+      //   },
+      //   "handler": function(response) {
+      //     payment_id = response.razorpay_payment_id;
+      //   },
+      //   // src: "https://checkout.razorpay.com/v1/checkout.js",
+      // });
+
+
+
+
+      // Your javascript code here
+      // alert("option" + settings.commerce_razorpay.amount);
+      var options = {
+        // "key": "rzp_test_ipkgumBJtJrvd1",
+        "key": key,
+        "amount": amount, // 100 paise = INR 1
+        "name": "Merchant Name",
+        "description": "Purchase Description",
+        "image": logo,
+        "handler": function(response) {
+
+          // alert(response.razorpay_payment_id);
+          // Capture Payment here.
+          // var htmlWidth = 300;
+          var data = {
+            payment_id: response.razorpay_payment_id
+          };
+          // $.post('/capture-payment', data, function(returnData) {
+          //   // alert('The server said ' + returnData);
+          // });
+          // $.post('/capture-payment', data);
+          // $.ajax({
+          //   type: "POST",
+          //   url: "/capture-payment",
+          //   data: {
+          //     'width': htmlWidth
+          //   },
+          //   success: function(data) {
+          //     console.log(data);
+          //   }
+          // })
+          // $.ajax({
+          //   type: "POST",
+          //   // url: "/capture-payment?payment_id=" + response.razorpay_payment_id + "&amount=100",
+          //   url: "/capture-payment",
+          //   data: {
+          //     payment_id: response.razorpay_payment_id,
+          //     amount: 100
+          //   },
+          //   dataType: 'JSON',
+          //   success: function(response) {
+          //     console.log(response.blablabla);
+          //     // put on console what server sent back...
+          //   }
+          // });
+          window.location.href = "/capture-payment?payment_id=" + response.razorpay_payment_id + "&amount=" + amount + "&order_id=" + order_id;
+
+
+          // var request = require("request");
+          // request({
+          //   method: "POST",
+          //   url: "https://rzp_test_ipkgumBJtJrvd1:AYnJYk0QEcW0LKJLuARDQ3Ti@api.razorpay.com/v1/payments/" +response.razorpay_payment_id + "/capture",
+          //   form: {
+          //     amount: 500
+          //   }
+          // }, function (error, response, body) {
+          //   console.log("Status:", response.statusCode);
+          //   console.log("Headers:", JSON.stringify(response.headers));
+          //   console.log("Response:", body);
+          // });
+
+        },
+        "prefill": {
+          "name": "Neha",
+          "email": "neha.jyoti@yahoo.com"
+        },
+        "notes": {
+          "address": "Hello World"
+        },
+        "theme": {
+          "color": "#F37254"
+        }
+      };
+
+
+
+
+      var rzp1 = new Razorpay(options);
+
+      document.getElementById("rzp-button1").onclick = function(e) {
+        rzp1.open();
+        e.preventDefault();
+      }
+    }
+  };
+}(jQuery));
+
+jQuery(document).ready(function() {
+
+});
