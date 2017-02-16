@@ -3,7 +3,7 @@
     attach: function(context, settings) {
 
 
-
+      // alert("inside file");
       // var rzp1 = new Razorpay(options);
       // rzp1.open();
       // e.preventDefault();
@@ -29,10 +29,10 @@
       var logo = settings.commerce_razorpay.logo;
       var order_id = settings.commerce_razorpay.order_id;
       var payment_id = '';
-      amount = 1500;
-      key = 'rzp_test_6VOiSPZ8ClqeCo';
-      order_id = 40;
-      logo = "/your_logo.png";
+      // amount = 1500;
+      // key = 'rzp_test_6VOiSPZ8ClqeCo';
+      // order_id = 40;
+      // logo = "/your_logo.png";
 
 
 
@@ -141,7 +141,8 @@
         "image": logo,
         "handler": function(response) {
 
-          // alert(response.razorpay_payment_id);
+          alert(response.razorpay_payment_id);
+
           // Capture Payment here.
           // var htmlWidth = 300;
           var data = {
@@ -175,8 +176,8 @@
           //     // put on console what server sent back...
           //   }
           // });
-          window.location.href = "/capture-payment?payment_id=" + response.razorpay_payment_id + "&amount=" + amount + "&order_id=" + order_id;
-
+          // window.location.href = "/capture-payment?payment_id=" + response.razorpay_payment_id + "&amount=" + amount + "&order_id=" + order_id;
+          $('razor-payment-id').val(response.razorpay_payment_id);
 
           // var request = require("request");
           // request({
