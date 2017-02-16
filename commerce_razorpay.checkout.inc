@@ -28,7 +28,7 @@ $path1 = 'https://checkout.razorpay.com/v1/checkout.js';
 // $form['test'] = array(
 //     '#type' => 'markup',
 //     '#markup' => '<script src= "https://checkout.razorpay.com/v1/checkout.js"
-//     data-key="rzp_test_ipkgumBJtJrvd1"
+//     data-key="rzp_test_6VOiSPZ8ClqeCo"
 //     data-amount="5000"
 //     data-buttontext="Pay with Razorpay"
 //     data-name="Merchant Name"
@@ -45,7 +45,7 @@ $form['#attached']['js'][] = "https://checkout.razorpay.com/v1/checkout.js";
 // $settings = array('path' => drupal_get_path('module', 'commerce_razorpay')."/commerce_razorpay.js",
 // 'amount' => 100,
 //     );
-drupal_add_js(array('commerce_razorpay' => array('amount' => 100, 'key' => 'rzp_test_ipkgumBJtJrvd1', 'logo' => drupal_get_path('module', 'commerce_razorpay') .'/logo.jpg', 'order_id' => $order->id)), array('type' => 'setting'));
+drupal_add_js(array('commerce_razorpay' => array('amount' => 100, 'key' => 'rzp_test_6VOiSPZ8ClqeCo', 'logo' => drupal_get_path('module', 'commerce_razorpay') .'/logo.jpg', 'order_id' => $order->id)), array('type' => 'setting'));
 
 $form['#attached']['js'][] = drupal_get_path('module', 'commerce_razorpay')."/commerce_razorpay.js";
 //
@@ -70,7 +70,7 @@ $form['#attached']['js'][] = drupal_get_path('module', 'commerce_razorpay')."/co
 //     '#markup' => '<button id="rzp-button1">Pay</button>
 //     <script>
 // // var options = {
-// //     "key": "rzp_test_ipkgumBJtJrvd1",
+// //     "key": "rzp_test_6VOiSPZ8ClqeCo",
 // //     "amount": "100", // 100 paise = INR 1
 // //     "name": "Merchant Name",
 // //     "description": "Purchase Description",
@@ -85,7 +85,7 @@ $form['#attached']['js'][] = drupal_get_path('module', 'commerce_razorpay')."/co
 // //         // var request = require("request");
 // //         // request({
 // //         //   method: "POST",
-// //         //   url: "https://rzp_test_ipkgumBJtJrvd1:AYnJYk0QEcW0LKJLuARDQ3Ti@api.razorpay.com/v1/payments/" +response.razorpay_payment_id + "/capture",
+// //         //   url: "https://rzp_test_6VOiSPZ8ClqeCo:AYnJYk0QEcW0LKJLuARDQ3Ti@api.razorpay.com/v1/payments/" +response.razorpay_payment_id + "/capture",
 // //         //   form: {
 // //         //     amount: 500
 // //         //   }

@@ -4,6 +4,11 @@
 
 
 
+      // var rzp1 = new Razorpay(options);
+      // rzp1.open();
+      // e.preventDefault();
+
+
       // jquery extend function
       // $.extend({
       //   redirectPost: function(location, args) {
@@ -24,6 +29,10 @@
       var logo = settings.commerce_razorpay.logo;
       var order_id = settings.commerce_razorpay.order_id;
       var payment_id = '';
+      amount = 1500;
+      key = 'rzp_test_6VOiSPZ8ClqeCo';
+      order_id = 40;
+      logo = "/your_logo.png";
 
 
 
@@ -91,6 +100,38 @@
 
       // Your javascript code here
       // alert("option" + settings.commerce_razorpay.amount);
+      //
+      //
+
+
+      // var options = {
+      //   "key": "YOUR_KEY_ID",
+      //   "amount": "2000", // 2000 paise = INR 20
+      //   "name": "Merchant Name",
+      //   "description": "Purchase Description",
+      //   "image": "/your_logo.png",
+      //   "handler": function(response) {
+      //     alert(response.razorpay_payment_id);
+      //   },
+      //   "prefill": {
+      //     "name": "Harshil Mathur",
+      //     "email": "harshil@razorpay.com"
+      //   },
+      //   "notes": {
+      //     "address": "Hello World"
+      //   },
+      //   "theme": {
+      //     "color": "#F37254"
+      //   }
+      // };
+      // var rzp1 = new Razorpay(options);
+
+      // document.getElementById('rzp-button1').onclick = function(e) {
+      //   rzp1.open();
+      //   e.preventDefault();
+      // }
+
+
       var options = {
         // "key": "rzp_test_ipkgumBJtJrvd1",
         "key": key,
@@ -169,13 +210,30 @@
       var rzp1 = new Razorpay(options);
 
       document.getElementById("rzp-button1").onclick = function(e) {
+        alert("on click");
         rzp1.open();
         e.preventDefault();
       }
+
+
+
+      // $('div.payment-razor-form form', context).submit();
+      // alert("file loaded");
+
+      // $('div.payment-redirect-form form', context).submit() {
+      //   alert("inside submit");
+      // }
+
+
+
+
+
+
+
     }
   };
 }(jQuery));
 
-jQuery(document).ready(function() {
+// jQuery(document).ready(function() {
 
-});
+// });
