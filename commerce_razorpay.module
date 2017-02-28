@@ -226,15 +226,15 @@ $form = array();
     // print '<pre>'; print_r("order"); print '</pre>';
     // print '<pre>'; print_r($order); print '</pre>';
     $order_id = $order->id;
-    // $order_id = arg(1);
+    $commerce_order_id = arg(1);
     // $order_id = '';
-    $order1 = commerce_cart_order_id($user->uid);
-    print '<pre>'; print_r("order"); print '</pre>';
-    print '<pre>'; print_r($order1); print '</pre>';exit;
+    // $order1 = commerce_cart_order_id($user->uid);
+    // // print '<pre>'; print_r("order"); print '</pre>';
+    // // print '<pre>'; print_r($order1); print '</pre>';exit;
 
 
-    print '<pre>'; print_r("order"); print '</pre>';
-    print '<pre>'; print_r($order_id); print '</pre>';exit;
+    // print '<pre>'; print_r("order"); print '</pre>';
+    // print '<pre>'; print_r($order_id); print '</pre>';exit;
     $amount = 100;
 
     // If the payment method has the 'offsite_autoredirect' option enabled, add
@@ -307,7 +307,7 @@ $form = array();
   $form['#attached']['js'][] = "https://checkout.razorpay.com/v1/checkout.js";
 
 
-drupal_add_js(array('commerce_razorpay' => array('amount' => $amount, 'key' => 'rzp_test_6VOiSPZ8ClqeCo', 'logo' => drupal_get_path('module', 'commerce_razorpay') .'/logo.jpg', 'order_id' => $order_id)), array('type' => 'setting'));
+drupal_add_js(array('commerce_razorpay' => array('amount' => $amount, 'key' => 'rzp_test_6VOiSPZ8ClqeCo', 'logo' => drupal_get_path('module', 'commerce_razorpay') .'/logo.jpg', 'order_id' => $order_id, 'commerce_order_id' => $commerce_order_id)), array('type' => 'setting'));
 $form['#attached']['js'][] = drupal_get_path('module', 'commerce_razorpay') . '/commerce_razorpay.js';
   
 // print '<pre>'; print_r("form"); print '<pre>';
@@ -329,13 +329,103 @@ $form['#attached']['js'][] = drupal_get_path('module', 'commerce_razorpay') . '/
 
 }
 
+/**
+ * Payment method callback: submit form submission.
+ */
+function commerce_razorpay_submit_form_submit($payment_method, $pane_form, $pane_values, $order, $charge) {
+  // Just as an example, we might store information in the order object from the
+  // payment parameters, though we would never save a full credit card number,
+  // even in examples!
+  // $number = $pane_values['credit_card']['number'];
+  // $pane_values['credit_card']['number'] = substr($number, 0, 4) . str_repeat('-', strlen($number) - 8) . substr($number, -4);
+
+  // $order->data['commerce_payment_example'] = $pane_values;
+
+  // Every attempted transaction should result in a new transaction entity being
+  // created for the order to log either the success or the failure.
+  commerce_razorpay_transaction($payment_method, $order, $charge);
+}
+
+/**
+ * Creates an example payment transaction for the specified charge amount.
+ *
+ * @param $payment_method
+ *   The payment method instance object used to charge this payment.
+ * @param $order
+ *   The order object the payment applies to.
+ * @param $charge
+ *   An array indicating the amount and currency code to charge.
+ */
+function commerce_razorpay_transaction($payment_method, $order, $charge) {
+  // $card_details = $order->data['commerce_payment_example']['credit_card'];
+
+  $transaction = commerce_payment_transaction_new('commerce_payment_example', $order->order_id);
+  $transaction->instance_id = $payment_method['instance_id'];
+  $transaction->amount = $charge['amount'];
+  $transaction->currency_code = $charge['currency_code'];
+  $transaction->status = COMMERCE_PAYMENT_STATUS_SUCCESS;
+
+  $transaction->message = 'Razorpay ....';
+  // $transaction->message_variables = array(
+  //   '@number' => $card_details['number'],
+  //   '@month' => $card_details['exp_month'],
+  //   '@year' => $card_details['exp_year'],
+  // );
+
+  commerce_payment_transaction_save($transaction);
+  return $transaction;
+
+  // $wrapper = entity_metadata_wrapper('commerce_order', $order);
+  // $currency = $wrapper->commerce_order_total->currency_code->value();
+  // $amount = $wrapper->commerce_order_total->amount->value();
+
+  // $transaction = commerce_payment_transaction_new('commerce_razorpay', $order->order_id);
+  // $transaction->instance_id = $payment_method['instance_id'];
+  // $transaction->amount = $amount;
+  // $transaction->currency_code = $currency;
+  // $transaction->remote_id = $txnid;
+  // $transaction->payload = $payload;
+  // $instance = explode('|', $payment_method['instance_id']);
+  // $transaction->payment_method = $instance[0];
+  // $transaction->message = '';
+  // $transaction->message_variables = '';
+
+  // // Succeessful.
+  // if ($status == "success") {
+  //   $transaction->remote_status = t('Success');
+  //   $transaction->message = t('Your transation ID is :') . $txnid . t('. Payment received at') . ' ' . date("d-m-Y H:i:s", REQUEST_TIME);
+  //   $transaction->status = COMMERCE_PAYMENT_STATUS_SUCCESS;
+  // }
+  // elseif ($status == "pending") {
+  //   // Batch process - Pending orders.
+  //   $transaction->remote_status = t('Pending');
+  //   $transaction->message = t('Your transation ID is :') . $txnid . t('. Payment pending at') . ' ' . date("d-m-Y H:i:s", REQUEST_TIME);
+  //   $transaction->status = COMMERCE_PAYMENT_STATUS_PENDING;
+  // }
+  // elseif ($status == "failure") {
+  //   // Failed transaction.
+  //   $transaction->remote_status = t('Failure');
+  //   $transaction->message = t('Your transation ID is :') . $txnid . t('. Payment failed at') . ' ' . date("d-m-Y H:i:s", REQUEST_TIME);
+  //   $transaction->status = COMMERCE_PAYMENT_STATUS_FAILURE;
+  // }
+  // commerce_payment_transaction_save($transaction);
+}
+
+
 function commerce_razorpay_capture_payment($payment_id = '') {
   $payment_id = $_GET['payment_id'];
   $amount = $_GET['amount'];
 $payment = capture_payment($payment_id, $amount);
-// drupal_goto();
-print '<pre>'; print_r("payment"); print '</pre>';
-print '<pre>'; print_r($payment); print '</pre>'; exit;
+$commerce_order_id = $_GET['order_id'];
+
+$order = commerce_order_load($commerce_order_id);
+// Send the customer on to the next checkout page.
+      commerce_payment_redirect_pane_next_page($order, t('Customer successfully submitted payment at the payment gateway.'));
+      drupal_goto(commerce_checkout_order_uri($order));
+
+// drupal_goto('checkout/'.$commerce_order_id.'/complete');
+// print '<pre>'; print_r("payment"); print '</pre>';
+// print '<pre>'; print_r($payment); print '</pre>'; exit;
 
 }
 
@@ -802,39 +892,39 @@ function commerce_razorpay_form_alter($form, &$form_state, $form_id) {
 /**
  * PayUMoney finish transaction.
  */
-function commerce_razorpay_transaction($order, $payment_method, $status, $txnid, $payload) {
-  // $wrapper = entity_metadata_wrapper('commerce_order', $order);
-  // $currency = $wrapper->commerce_order_total->currency_code->value();
-  // $amount = $wrapper->commerce_order_total->amount->value();
+// function commerce_razorpay_transaction($order, $payment_method, $status, $txnid, $payload) {
+//   // $wrapper = entity_metadata_wrapper('commerce_order', $order);
+//   // $currency = $wrapper->commerce_order_total->currency_code->value();
+//   // $amount = $wrapper->commerce_order_total->amount->value();
 
-  // $transaction = commerce_payment_transaction_new('commerce_razorpay', $order->order_id);
-  // $transaction->instance_id = $payment_method['instance_id'];
-  // $transaction->amount = $amount;
-  // $transaction->currency_code = $currency;
-  // $transaction->remote_id = $txnid;
-  // $transaction->payload = $payload;
-  // $instance = explode('|', $payment_method['instance_id']);
-  // $transaction->payment_method = $instance[0];
-  // $transaction->message = '';
-  // $transaction->message_variables = '';
+//   // $transaction = commerce_payment_transaction_new('commerce_razorpay', $order->order_id);
+//   // $transaction->instance_id = $payment_method['instance_id'];
+//   // $transaction->amount = $amount;
+//   // $transaction->currency_code = $currency;
+//   // $transaction->remote_id = $txnid;
+//   // $transaction->payload = $payload;
+//   // $instance = explode('|', $payment_method['instance_id']);
+//   // $transaction->payment_method = $instance[0];
+//   // $transaction->message = '';
+//   // $transaction->message_variables = '';
 
-  // // Succeessful.
-  // if ($status == "success") {
-  //   $transaction->remote_status = t('Success');
-  //   $transaction->message = t('Your transation ID is :') . $txnid . t('. Payment received at') . ' ' . date("d-m-Y H:i:s", REQUEST_TIME);
-  //   $transaction->status = COMMERCE_PAYMENT_STATUS_SUCCESS;
-  // }
-  // elseif ($status == "pending") {
-  //   // Batch process - Pending orders.
-  //   $transaction->remote_status = t('Pending');
-  //   $transaction->message = t('Your transation ID is :') . $txnid . t('. Payment pending at') . ' ' . date("d-m-Y H:i:s", REQUEST_TIME);
-  //   $transaction->status = COMMERCE_PAYMENT_STATUS_PENDING;
-  // }
-  // elseif ($status == "failure") {
-  //   // Failed transaction.
-  //   $transaction->remote_status = t('Failure');
-  //   $transaction->message = t('Your transation ID is :') . $txnid . t('. Payment failed at') . ' ' . date("d-m-Y H:i:s", REQUEST_TIME);
-  //   $transaction->status = COMMERCE_PAYMENT_STATUS_FAILURE;
-  // }
-  // commerce_payment_transaction_save($transaction);
-}
+//   // // Succeessful.
+//   // if ($status == "success") {
+//   //   $transaction->remote_status = t('Success');
+//   //   $transaction->message = t('Your transation ID is :') . $txnid . t('. Payment received at') . ' ' . date("d-m-Y H:i:s", REQUEST_TIME);
+//   //   $transaction->status = COMMERCE_PAYMENT_STATUS_SUCCESS;
+//   // }
+//   // elseif ($status == "pending") {
+//   //   // Batch process - Pending orders.
+//   //   $transaction->remote_status = t('Pending');
+//   //   $transaction->message = t('Your transation ID is :') . $txnid . t('. Payment pending at') . ' ' . date("d-m-Y H:i:s", REQUEST_TIME);
+//   //   $transaction->status = COMMERCE_PAYMENT_STATUS_PENDING;
+//   // }
+//   // elseif ($status == "failure") {
+//   //   // Failed transaction.
+//   //   $transaction->remote_status = t('Failure');
+//   //   $transaction->message = t('Your transation ID is :') . $txnid . t('. Payment failed at') . ' ' . date("d-m-Y H:i:s", REQUEST_TIME);
+//   //   $transaction->status = COMMERCE_PAYMENT_STATUS_FAILURE;
+//   // }
+//   // commerce_payment_transaction_save($transaction);
+// }

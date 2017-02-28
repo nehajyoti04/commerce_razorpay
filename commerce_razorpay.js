@@ -28,6 +28,7 @@
       var key = settings.commerce_razorpay.key;
       var logo = settings.commerce_razorpay.logo;
       var order_id = settings.commerce_razorpay.order_id;
+      var commerce_order_id = settings.commerce_razorpay.commerce_order_id;
       var payment_id = '';
       // amount = 1500;
       // key = 'rzp_test_6VOiSPZ8ClqeCo';
@@ -156,7 +157,7 @@
 
 
 
-          window.location = '/capture-payment?payment_id=' + payment_id + '&amount=' +amount + '&order_id=' + order_id;
+          window.location = '/capture-payment?payment_id=' + payment_id + '&amount=' +amount + '&order_id=' + commerce_order_id;
           // $.post('/capture-payment', data, function(returnData) {
           //   // alert('The server said ' + returnData);
           // });
