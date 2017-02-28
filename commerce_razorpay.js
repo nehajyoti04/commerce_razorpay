@@ -139,15 +139,24 @@
         "name": "Merchant Name",
         "description": "Purchase Description",
         "image": logo,
+        "order_id": order_id,
         "handler": function(response) {
 
           alert(response.razorpay_payment_id);
+          alert("order_id" + order_id);
+
 
           // Capture Payment here.
           // var htmlWidth = 300;
-          var data = {
-            payment_id: response.razorpay_payment_id
-          };
+          // var data = {
+          //   payment_id: response.razorpay_payment_id
+          // };
+          var payment_id = response.razorpay_payment_id;
+          alert("window.location" + payment_id);
+
+
+
+          window.location = '/capture-payment?payment_id=' + payment_id + '&amount=' +amount + '&order_id=' + order_id;
           // $.post('/capture-payment', data, function(returnData) {
           //   // alert('The server said ' + returnData);
           // });
@@ -179,6 +188,22 @@
           // window.location.href = "/capture-payment?payment_id=" + response.razorpay_payment_id + "&amount=" + amount + "&order_id=" + order_id;
           $('razor-payment-id').val(response.razorpay_payment_id);
 
+          // // Capture payment.
+          // var request = require('request');
+
+          // request({
+          //   method: 'POST',
+          //   url: 'https://' + key + ':HSFl7YizDJttZmxHi2a3123T@api.razorpay.com/v1/payments/' + response.razorpay_payment_id + '/capture',
+          //   form: {
+          //     amount: amount
+          //   }
+          // }, function(error, response, body) {
+          //   console.log('Status:', response.statusCode);
+          //   console.log('Headers:', JSON.stringify(response.headers));
+          //   console.log('Response:', body);
+          // });
+
+
           // var request = require("request");
           // request({
           //   method: "POST",
@@ -209,6 +234,7 @@
 
 
       var rzp1 = new Razorpay(options);
+      rzp1.open();
 
       document.getElementById("rzp-button1").onclick = function(e) {
         alert("on click");

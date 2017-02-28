@@ -226,6 +226,15 @@ $form = array();
     // print '<pre>'; print_r("order"); print '</pre>';
     // print '<pre>'; print_r($order); print '</pre>';
     $order_id = $order->id;
+    // $order_id = arg(1);
+    // $order_id = '';
+    $order1 = commerce_cart_order_id($user->uid);
+    print '<pre>'; print_r("order"); print '</pre>';
+    print '<pre>'; print_r($order1); print '</pre>';exit;
+
+
+    print '<pre>'; print_r("order"); print '</pre>';
+    print '<pre>'; print_r($order_id); print '</pre>';exit;
     $amount = 100;
 
     // If the payment method has the 'offsite_autoredirect' option enabled, add
@@ -282,13 +291,13 @@ $form = array();
   // foreach ($values as $key => $value) {
     // print '<pre>'; print_r("values"); print '</pre>';
     // print '<pre>'; print_r($value); print '</pre>';
-  //   $form[$value] = array(
-  //     '#type' => 'hidden',
-  //     '#name' => $key,
-  //     '#value' => $value,
-  //     '#id' => '',
-  //     '#attributes' => array(),
-  //   );
+    // $form[$value] = array(
+    //   '#type' => 'hidden',
+    //   '#name' => $key,
+    //   '#value' => $value,
+    //   '#id' => '',
+    //   '#attributes' => array(),
+    // );
   // }
   $form['submit'] = array(
     '#type' => 'submit',
@@ -300,6 +309,10 @@ $form = array();
 
 drupal_add_js(array('commerce_razorpay' => array('amount' => $amount, 'key' => 'rzp_test_6VOiSPZ8ClqeCo', 'logo' => drupal_get_path('module', 'commerce_razorpay') .'/logo.jpg', 'order_id' => $order_id)), array('type' => 'setting'));
 $form['#attached']['js'][] = drupal_get_path('module', 'commerce_razorpay') . '/commerce_razorpay.js';
+  
+// print '<pre>'; print_r("form"); print '<pre>';
+// print '<pre>'; print_r($form); print '</pre>';
+
   return array(
     'form' => array(
       '#type' => 'markup',
@@ -312,12 +325,15 @@ $form['#attached']['js'][] = drupal_get_path('module', 'commerce_razorpay') . '/
 
 
 
+
+
 }
 
 function commerce_razorpay_capture_payment($payment_id = '') {
   $payment_id = $_GET['payment_id'];
   $amount = $_GET['amount'];
 $payment = capture_payment($payment_id, $amount);
+// drupal_goto();
 print '<pre>'; print_r("payment"); print '</pre>';
 print '<pre>'; print_r($payment); print '</pre>'; exit;
 
@@ -353,6 +369,7 @@ $payment = $api->payment->fetch($payment_id);
 $payment->capture(array('amount' => $amount));
 $order_id = $_GET['order_id'];
 // Success URL: checkout/ORDER_ID/payment/return/ORDER_PAYMENT_REDIRECT_KEY
+
 if($payment->status == 'authorized') {
   // drupal_goto('checkout/'. $order_id . "/payment/return/". $payment_id);
   // drupal_goto('checkout/'. $order_id . "/checkout");

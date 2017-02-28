@@ -1,0 +1,915 @@
+{
+	"auto_complete":
+	{
+		"selected_items":
+		[
+		]
+	},
+	"buffers":
+	[
+		{
+			"contents": "<?php\nuse Razorpay\\Api\\Api;\n// use Drupal\\Razorpay\\Api;\n// namespace  Razorpay\\Api;\n// use Razorpay\\Api;\n// namespace Razorpay\\Api;\n// function theme_preprocess_html(&$var) {\n//       $script = array(\n//         '#tag' => 'script',\n//         '#attributes' => array('type' => 'text/javascript'),\n//         '#value' => 'Add your javascript here',\n//        );\n//        drupal_add_html_head($script, 'script');\n//     }\n\n/**\n * Administration forms form payment method.\n */\nfunction commerce_razorpay_settings_form($settings = NULL) {\n  $form = array();\n  $settings = (array) $settings + array(\n    'key_id' => '',\n    'key_secret' => '',\n    'url' => '',\n  );\n  $form['key_id'] = array(\n    '#type' => 'textfield',\n    '#title' => t('Key ID'),\n    '#default_value' => $settings['key_id'],\n  );\n  $form['key_secret'] = array(\n    '#type' => 'textfield',\n    '#title' => t('Key Secre'),\n    '#default_value' => $settings['key_secret'],\n  );\n  $url = array(0 => t('Test'),1 => t('Production'));\n  $form['url'] = array(\n    '#type' => 'radios',\n    '#title' => t('Base URI'),\n    '#options' => $url,\n    '#default_value' => $settings['url'],\n  );\n  return $form;\n}\n\n/**\n * Implements hook_menu().\n */\nfunction commerce_razorpay_menu() {\n\n$items['razorpay-checkout'] = array(\n    'title' => 'Administration menu',\n    'description' => 'Adjust administration menu settings.',\n    'page callback' => 'drupal_get_form',\n    'page arguments' => array('commerce_razorpay_checkout_form'),\n    'access arguments' => array('administer site configuration'),\n    'file' => 'commerce_razorpay.checkout.inc',\n  );\n\n$items['capture-payment'] = array(\n    'title' => 'Capture Payement',\n    'description' => 'Adjust administration menu settings.',\n    'page callback' => 'commerce_razorpay_capture_payment',\n    'access arguments' => array('administer site configuration'),\n  );\nreturn $items;\n}\n\n/**\n * Implements hook_commerce_payment_method_info().\n */\nfunction commerce_razorpay_commerce_payment_method_info() {\n  // $icon = _commerce_payumoney_icons();\n  $display_title = t('Razorpay');\n  $payment_methods = array();\n  $payment_methods['commerce_razorpay'] = array(\n    'title' => t(\"RazorPay\"),\n    'display_title' => $display_title,\n    'short_title' => 'RazorPay Payment Gateway',\n    'description' => t(\"RazorPay Payment Gateway\"),\n    'active' => TRUE,\n    'terminal' => TRUE,\n    'offsite' => TRUE,\n    'offsite_autoredirect' => FALSE,\n    'callbacks' => array('redirect_form' => 'commerce_razorpay_commerce_payment_method_redirect_form'),\n  );\n  return $payment_methods;\n}\n\nfunction commerce_razorpay_commerce_checkout_pane_info_alter(&$checkout_pane)\n{\n\n  // print '<pre>'; print_r(\"checkout RazorPay\"); print '</pre>';\n  // print '<pre>'; print_r($checkout_pane['commerce_razorpay_redirect']['base']); print '</pre>';\n  // $checkout_pane['commerce_razorpay_redirect']['base'] = 'commerce_razor_redirect_pane';\n  // // For each pane I want to validate\n  // $checkout_pane['my_pane_id']['callbacks'] = array(\n  //   'checkout_form_validate' => 'my_module_checkout_review_pane_checkout_form_validate',\n  // );\n  // // etc\n}\n\n// function commerce_razorpay_redirect_pane_checkout_form(&$form, &$form_state, $checkout_pane, $order) {\n\n// print '<pre>'; print_r(\"commerce_razorpay_redirect_pane checkout form\"); print '</pre>';\n//   // First load the order's specified payment method instance.\n//   if (!empty($order->data['payment_method'])) {\n//     $payment_method = commerce_payment_method_instance_load($order->data['payment_method']);\n//   }\n//   else {\n//     $payment_method = FALSE;\n//   }\n\n//   // If the payment method doesn't exist or does not require a redirect...\n//   if (!$payment_method || !$payment_method['offsite']) {\n//     if (!$payment_method) {\n//       $log = t('Customer skipped the Payment page because no payment was required.');\n//     }\n//     else {\n//       $log = t('Customer skipped the Payment page because payment was already submitted.');\n//     }\n\n//     // Advance the customer to the next step of the checkout process.\n//     commerce_payment_redirect_pane_next_page($order, $log);\n//     drupal_goto(commerce_checkout_order_uri($order));\n//   }\n\n//   // If the user came to the cancel URL...\n//   if (arg(3) == 'back' && arg(4) == $order->data['payment_redirect_key']) {\n//     // Perform any payment cancellation functions if necessary.\n//     if ($callback = commerce_payment_method_callback($payment_method, 'redirect_form_back')) {\n//       $callback($order, $payment_method);\n//     }\n\n//     // Send the customer to the previous step of the checkout process.\n//     commerce_payment_redirect_pane_previous_page($order, t('Customer canceled payment at the payment gateway.'));\n//     drupal_goto(commerce_checkout_order_uri($order));\n//   }\n\n//   // If the user came to the return URL...\n//   if (arg(3) == 'return' && arg(4) == $order->data['payment_redirect_key']) {\n//     // Check for a validate handler on return.\n//     $validate_callback = commerce_payment_method_callback($payment_method, 'redirect_form_validate');\n\n//     // If there is no validate handler or if there is and it isn't FALSE...\n//     if (!$validate_callback || $validate_callback($order, $payment_method) !== FALSE) {\n//       // Perform any submit functions if necessary.\n//       if ($callback = commerce_payment_method_callback($payment_method, 'redirect_form_submit')) {\n//         $callback($order, $payment_method);\n//       }\n\n//       // Send the customer on to the next checkout page.\n//       commerce_payment_redirect_pane_next_page($order, t('Customer successfully submitted payment at the payment gateway.'));\n//       drupal_goto(commerce_checkout_order_uri($order));\n//     }\n//     else {\n//       // Otherwise display the failure message and send the customer back.\n//       drupal_set_message(t('Payment failed at the payment server. Please review your information and try again.'), 'error');\n\n//       commerce_payment_redirect_pane_previous_page($order, t('Customer payment submission failed at the payment gateway.'));\n//       drupal_goto(commerce_checkout_order_uri($order));\n//     }\n//   }\n\n//   // If the function to build the redirect form exists...\n//   if ($callback = commerce_payment_method_callback($payment_method, 'redirect_form')) {\n//     print '<pre>'; print_r(\"commerce_payment_method_callback\"); print '</pre>';\n//     // Generate a key to use in the return URL from the redirected service if it\n//     // does not already exist.\n//     if (empty($order->data['payment_redirect_key'])) {\n//       $order->data['payment_redirect_key'] = drupal_hash_base64(time());\n//       print '<pre>'; print_r(\"payment direct key\". $order->data['payment_redirect_key']); print '</pre>';\n//       commerce_order_save($order);\n//       // print '<pre>'; print_r(\"after order save\"); print '</pre>';exit;\n//     }\n//     print '<pre>'; print_r(\"payment method\"); print '</pre>';\n//     print '<pre>'; print_r($payment_method); print '</pre>';\n\n//     // If the payment method has the 'offsite_autoredirect' option enabled, add\n//     // the redirection behavior.\n//     if (!empty($payment_method['offsite_autoredirect'])) {\n\n//       print '<pre>'; print_r(\"inside offsite_autoredirect\"); print '</pre>';\n\n//       $amount = $order->commerce_order_total[LANGUAGE_NONE][0]['amount'];\n// // drupal_add_html_head('<meta name=\"viewport\" content=\"width=device-width”>');\n// $form['#attached']['js'][] = \"https://checkout.razorpay.com/v1/checkout.js\";\n\n// drupal_add_js(array('commerce_razorpay' => array('amount' => $amount, 'key' => 'rzp_test_6VOiSPZ8ClqeCo', 'logo' => drupal_get_path('module', 'commerce_razorpay') .'/logo.jpg', 'order_id' => $order->order_id)), array('type' => 'setting'));\n// // $form['#attached']['js'][] = array(array('commerce_razorpay' => array('amount' => $amount, 'key' => 'rzp_test_6VOiSPZ8ClqeCo', 'logo' => drupal_get_path('module', 'commerce_razorpay') .'/logo.jpg', 'order_id' => $order->order_id)), array('type' => 'setting'));\n//  $form['#attached']['js'][] = drupal_get_path('module', 'commerce_razorpay') . '/commerce_razorpay.js';\n\n// // $form['actions']['submit']['#id'] = 'edit-submit-webformname';\n//  $form['submit'] = array('#id' => 'rzp-button1', '#type' => 'button', '#value' => t('Redirect') );\n//       // $form['#action'] = url('user/register');\n//       // $form['#attached']['js'][] = drupal_get_path('module', 'commerce_payment') . '/commerce_payment.js';\n\n//       $form['help']['#markup'] = '<div class=\"checkout-help\">' . t('Please wait while you are redirected to the payment server. If nothing happens within 10 seconds, please click on the button below.') . '</div>';\n//     }\n\n//     // print '<pre>'; print_r(\"outside if\"); print '</pre>';\n\n//     // Merge the new form into the current form array, preserving the help text\n//     // if it exists. We also add a wrapper so the form can be easily submitted.\n//     $form += drupal_get_form($callback, $order, $payment_method);\n\n//     $form['#prefix'] = '<div class=\"payment-redirect-form\">';\n//     $form['#suffix'] = '</div>';\n//   }\n//   else {\n//     // Alert the administrator that the module does not provide a required form.\n//     drupal_set_message(t('The %title payment method indicates it is offsite but does not define the necessary form to process the redirect.', array('%title' => $payment_method['title'])), 'error');\n//   }\n// }\n\n\nfunction commerce_razorpay_commerce_payment_method_redirect_form($action, array $values = array()) {\nglobal $user;\n$form = array();\n   // print '<pre>'; print_r(\"commerce_razorpay - commerce_payment_method_callback\"); print '</pre>';\n    // Generate a key to use in the return URL from the redirected service if it\n    // does not already exist.\n\n    // $order = commerce_cart_order_load($user->uid);\n    $order = create_an_order();\n    // print '<pre>'; print_r(\"order\"); print '</pre>';\n    // print '<pre>'; print_r($order); print '</pre>';\n    $order_id = $order->id;\n    $amount = 100;\n\n    // If the payment method has the 'offsite_autoredirect' option enabled, add\n    // the redirection behavior.\n\n      // print '<pre>'; print_r(\"inside offsite_autoredirect\"); print '</pre>';\n\n      // $amount = $order->commerce_order_total[LANGUAGE_NONE][0]['amount'];\n// drupal_add_html_head('<meta name=\"viewport\" content=\"width=device-width”>');\n// $form['#attached']['js'][] = \"https://checkout.razorpay.com/v1/checkout.js\";\n\n// drupal_add_js(array('commerce_razorpay' => array('amount' => $amount, 'key' => 'rzp_test_6VOiSPZ8ClqeCo', 'logo' => drupal_get_path('module', 'commerce_razorpay') .'/logo.jpg', 'order_id' => $order_id)), array('type' => 'setting'));\n// $form['#attached']['js'][] = array(array('commerce_razorpay' => array('amount' => $amount, 'key' => 'rzp_test_6VOiSPZ8ClqeCo', 'logo' => drupal_get_path('module', 'commerce_razorpay') .'/logo.jpg', 'order_id' => $order->order_id)), array('type' => 'setting'));\n // $form['#attached']['js'][] = drupal_get_path('module', 'commerce_razorpay') . '/commerce_razorpay.js';\n\n// $form['actions']['submit']['#id'] = 'edit-submit-webformname';\n//  $form['submit'] = array('#id' => 'rzp-button1', '#type' => 'button', '#value' => t('Redirect') );\n      // $form['#action'] = url('user/register');\n      // $form['#attached']['js'][] = drupal_get_path('module', 'commerce_payment') . '/commerce_payment.js';\n\n      $form['help']['#markup'] = '<div class=\"checkout-help\">' . t('Please wait while you are redirected to the payment server. If nothing happens within 10 seconds, please click on the button below.') . '</div>';\n\n      $form['razor_payment_id'] = array(\n        '#attributes' => array('id' => 'razor-payment-id'),\n         '#type' => 'hidden',\n         '#value' => '',\n      );\n      // $form['razor_payment_id'] = array(\n      //   'type' => 'textfield',\n      //   'value' => '',\n      //   // '#markup' => '<div id=\"razor-payment-id\"></div>',\n      //   // '#hidden' => TRUE,\n      //   );\n\n    // print '<pre>'; print_r(\"outside if\"); print '</pre>';\n\n    // Merge the new form into the current form array, preserving the help text\n    // if it exists. We also add a wrapper so the form can be easily submitted.\n// print '<pre>'; print_r(\"action\"); print '</pre>';\n//     print '<pre>'; print_r($action); print '</pre>';\n  //   $form = array(\n  //   '#type' => 'form',\n  //   '#action' => $action,\n  //   '#method' => 'POST',\n  //   '#id' => '',\n  //   '#attributes' => array(),\n  // );\n    // $form['#prefix'] = '<div class=\"payment-redirect-form\">';\n    // $form['#suffix'] = '</div>';\n// print '<pre>'; print_r(\"values\"); print '</pre>';\n//     print '<pre>'; print_r($values); print '</pre>';\n    // $order_id = $values['build_info']['args'][0]->order_id;\n    // $amount = $values['build_info']['args'][0]->commerce_order_total[LANGUAGE_NONE][0]['amount'];\n  // foreach ($values as $key => $value) {\n    // print '<pre>'; print_r(\"values\"); print '</pre>';\n    // print '<pre>'; print_r($value); print '</pre>';\n    // $form[$value] = array(\n    //   '#type' => 'hidden',\n    //   '#name' => $key,\n    //   '#value' => $value,\n    //   '#id' => '',\n    //   '#attributes' => array(),\n    // );\n  // }\n  $form['submit'] = array(\n    '#type' => 'submit',\n    '#id' => 'rzp-button1',\n    '#value' => t('Proceed to payment'),\n  );\n  $form['#attached']['js'][] = \"https://checkout.razorpay.com/v1/checkout.js\";\n\n\ndrupal_add_js(array('commerce_razorpay' => array('amount' => $amount, 'key' => 'rzp_test_6VOiSPZ8ClqeCo', 'logo' => drupal_get_path('module', 'commerce_razorpay') .'/logo.jpg', 'order_id' => $order_id)), array('type' => 'setting'));\n$form['#attached']['js'][] = drupal_get_path('module', 'commerce_razorpay') . '/commerce_razorpay.js';\n  // return array(\n  //   'form' => array(\n  //     '#type' => 'markup',\n  //     '#markup' => drupal_render($form),\n  //   ),\n  // );\n\n\n\n\n\n\n}\n\nfunction commerce_razorpay_capture_payment($payment_id = '') {\n  $payment_id = $_GET['payment_id'];\n  $amount = $_GET['amount'];\n$payment = capture_payment($payment_id, $amount);\nprint '<pre>'; print_r(\"payment\"); print '</pre>';\nprint '<pre>'; print_r($payment); print '</pre>'; exit;\n\n}\n\nfunction get_payments($count = 2, $skip = 1, $from = 1400826740) {\n  $api = new Api('rzp_test_6VOiSPZ8ClqeCo', 'HSFl7YizDJttZmxHi2a3123T');\n  $params = array(\n      'count' => 2,\n      'skip'  => 1,\n      'from'  => 1400826740,\n      'order'\n  );\n\n  $payments = $api->payment->all($params);\n\n}\n\nfunction capture_payment($payment_id, $amount = '', $order_id = '') {\n\n  // print '<pre>'; print_r(\"inside capture payment\"); print '</pre>';\n  // print '<pre>'; print_r($_REQUEST); print '</pre>';exit;\n\n  // echo json_encode(array(\"payment_id\"=>$_POST['payment_id']));\n  $fb_lib_path = function_exists('libraries_get_path') ? libraries_get_path('razorpay-php') : 'sites/all/libraries/razorpay-php';\n\n  require 'libraries/razorpay-php/Razorpay.php';\n  // require '/var/www/npro/libraries/razorpay-php/Razorpay.php';\n\n  $api = new Api('rzp_test_6VOiSPZ8ClqeCo', 'HSFl7YizDJttZmxHi2a3123T');\n$amount = $_GET['amount'];\n$payment = $api->payment->fetch($payment_id);\n$payment->capture(array('amount' => $amount));\n$order_id = $_GET['order_id'];\n// Success URL: checkout/ORDER_ID/payment/return/ORDER_PAYMENT_REDIRECT_KEY\nif($payment->status == 'authorized') {\n  // drupal_goto('checkout/'. $order_id . \"/payment/return/\". $payment_id);\n  // drupal_goto('checkout/'. $order_id . \"/checkout\");\n} else {\n  print '<pre>'; print_r(\"payment status\"); print '</pre>';\n  print '<pre>'; print_r($payment->status); print '</pre>'; exit;\n}\n// Fail URL: checkout/ORDER_ID/payment/back/ORDER_PAYMENT_REDIRECT_KEY\n\n\nreturn $payment;\n}\n/**\n * Retrieve a refund of payment by id.\n * @param  {[type]} $payment_id [description]\n * @param  {[type]} $refund_id  [description]\n * @return {[type]}             [description]\n */\n\nfunction razorpay_payment_refund($payment_id = 'pay_29QQoUBi66xm2f', $refund_id = 'rfnd_AABBdHIieexn5c') {\n\n\n  $api = new Api('rzp_test_26ccbdbfe0e84b', '69b2e24411e384f91213f22a');\n\n  $payment = $api->payment->fetch($payment_id)->refunds()->fetch($refund_id);\n\n}\n\nfunction razorpay_payment_all_refunds($payment_id = 'pay_29QQoUBi66xm2f', $from = 1500826740, $to = 1500826760, $count = 2, $skip = 1) {\n  $api = new Api('rzp_test_26ccbdbfe0e84b', '69b2e24411e384f91213f22a');\n\n  $params = array(\n      'from'  => 1500826740,\n      'to'    => 1500826760,\n      'count' => 2,\n      'skip'  => 1\n  );\n\n  $payments = $api->payment->fetch($payment_id)->refunds()->all($params);\n\n}\n\n/**\n * Create an order.\n * @return [type] [description]\n */\nfunction create_an_order() {\n\n// $library = libraries_load('razorpay-php');\n// dpm(\"library\");\n// dpm($library);\n$name = 'razorpay-php';\n// if (($library = libraries_load($name)) && !empty($library['loaded'])) {\n\n  $fb_lib_path = function_exists('libraries_get_path') ? libraries_get_path('razorpay-php') : 'sites/all/libraries/razorpay-php';\n\n  // require '/var/www/npro/libraries/razorpay-php/Razorpay.php';\n  require 'libraries/razorpay-php/Razorpay.php';\n  // require DRUPAL_ROOT .\"/\". $fb_lib_path.'/Razorpay.php';\n  // require(libraries_get_path('razorpay-php') . '/Razorpay.php');\n\n  // @include DRUPAL_ROOT .\"/\". $fb_lib_path.'/Razorpay.php';\n  //\n  //\n  // require_once DRUPAL_ROOT .\"/\". $fb_lib_path.'/Razorpay.php';\n  // require_once(libraries_get_path('razorpay-php') . '/src/Api.php');\n  // include('/var/www/npro/libraries/razorpay-php/src/Api.php');\n// }\n//  $fb_platform = $fb_lib_path . '/src/Api.php';\n // watchdog('commerce_razorpay fb platform', $fb_platform);\n // dpm(\"fb platform\");\n // dpm($fb_platform);\n // include($fb_lib_path);\n // include($fb_lib_path.'/Razorpay.php');\n // include('sites/all/libraries/razorpay-php/Razorpay.php');\n // include($fb_lib_path.'/src/Api.php');\n // libraries_load($fb_lib_path);\n // require_once (libraries_get_path('razorpay-php') . '/src/Api.php');\n // include_once($fb_lib_path);\n // include_once('/Applications/MAMP/bin/php/php5.6.10/lib/php');\n // require_once DRUPAL_ROOT .\"/\".$fb_lib_path;\n // libraries_load('razorpay-php');\n // require($fb_lib_path.'/src/Api.php');\n // drupal_add_library('commerce_razorpay', 'razorpay-php', TRUE);\n // watchdog('commerce_razorpay - api', !class_exists('Api'));\n // watchdog('commerce_razorpay - include', !@include($fb_platform));\n\n // require DRUPAL_ROOT .\"/\". $fb_lib_path.'/Razorpay.php';\n// require_once DRUPAL_ROOT .\"/\". $fb_lib_path.'/src/Api.php';\n// $api = new Api('razorpay-php', 'sites/all/libraries');\n$api = new Api('rzp_test_6VOiSPZ8ClqeCo', 'HSFl7YizDJttZmxHi2a3123T');\n$order = $api->order->create(array('amount' => 100, \"currency\" => \"INR\", \"receipt\" => \"test_1\"));\n// print '<pre>'; print_r(\"order\"); print '</pre>';\n//      print '<pre>'; print_r($order); print '</pre>';exit;\n// print '<pre>'; print_r(\"api\"); print '</pre>';\n//      print '<pre>'; print_r($api); print '</pre>';exit;\n\n// $api = new Api('rzp_test_26ccbdbfe0e84b', '69b2e24411e384f91213f22a');\n     // $order = $api->order->create(array('amount' => 100, \"currency\", \"INR\", \"receipt\", \"test_1\", \"payment_capture\", false));\n     // print '<pre>'; print_r(\"order\"); print '</pre>';\n     // print '<pre>'; print_r($order); print '</pre>';exit;\n     return $order;\n\n\n try {\n     // if (!class_exists('Api') && !@include($fb_platform)) {\n     if(!@include($fb_platform)){\n      //show error\n      watchdog('commerce_razorpay', 'class does not exist');\n      return NULL;\n     }\n     // $fb = new Facebook(array(\n     //   'appId' => $appId,\n     //   'secret' => $secret,\n     //   'cookie' => $cookie));\n     $api = new Api('rzp_test_26ccbdbfe0e84b', '69b2e24411e384f91213f22a');\n     $order = $api->order->create(array('amount' => 100, \"currency\", \"INR\", \"receipt\", \"test_1\", \"payment_capture\", false));\n     // print '<pre>'; print_r(\"order\"); print '</pre>';\n     // print '<pre>'; print_r($order); print '</pre>';exit;\n     return $order;\n }\n catch (Exception $e) {}\n\n\n// drupal_add_library('razorpay-php', 'Razorpay.php');\n// drupal_add_library('razorpay-php', 'Api.php');\n// $api = new Api('rzp_test_26ccbdbfe0e84b', '69b2e24411e384f91213f22a');\n$order = $api->order->create(array('amount' => 100, \"currency\", \"INR\", \"receipt\", \"test_1\", \"payment_capture\", false));\n\n\n// $refund = $payment->create();\n\nreturn $order;\n}\n\n/**\n * Implements hook_commerce_checkout_pane_info().\n */\nfunction commerce_razorpay_commerce_checkout_pane_info() {\n  $checkout_panes = array();\n\n  $checkout_panes['commerce_razorpay'] = array(\n    'title' => t('Payment'),\n    'page' => 'review',\n    'file' => 'includes/commerce_payment.checkout_pane.inc',\n    'base' => 'commerce_payment_pane',\n    'weight' => 10,\n  );\n\n  $checkout_panes['commerce_razorpay_redirect'] = array(\n    'title' => t('Off-site payment redirect'),\n    'page' => 'payment',\n    'locked' => TRUE,\n    'file' => 'includes/commerce_payment.checkout_pane.inc',\n    'base' => 'commerce_payment_redirect_pane',\n  );\n\n  return $checkout_panes;\n}\n\nfunction commerce_razorpay_form_alter($form, &$form_state, $form_id) {\n  global $user;\n  // print '<pre>'; print_r(\"form_id\"); print '</pre>';\n  // print '<pre>'; print_r($form_id); print '</pre>';\n  if($form_id == 'commerce_checkout_form_checkout') {\n  }\n  if($form_id == 'commerce_checkout_form_review') {\n    // dpm(\"form\");\n    // dpm($form);\n    // dpm(\"form state\");\n    // dpm($form_state['commerce_payment']);\n    // $order = commerce_cart_order_load($user->uid);\n    // $amount = $order->commerce_order_total[LANGUAGE_NONE][0]['amount'];\n    // // dpm(\"order\");\n    // // dpm($order);\n    // drupal_add_html_head('<meta name=\"viewport\" content=\"width=device-width”>');\n    // $form['#attached']['js'][] = \"https://checkout.razorpay.com/v1/checkout.js\";\n\n    // drupal_add_js(array('commerce_razorpay' => array('amount' => $amount, 'key' => 'rzp_test_6VOiSPZ8ClqeCo', 'logo' => drupal_get_path('module', 'commerce_razorpay') .'/logo.jpg', 'order_id' => $order->order_id)), array('type' => 'setting'));\n\n    // $form['#attached']['js'][] = drupal_get_path('module', 'commerce_razorpay').\"/commerce_razorpay.js\";\n\n  }\n}\n/**\n * Implements hook_redirect_form().\n */\n// function commerce_razorpay_redirect_form($form, &$form_state, $order, $payment_method) {\n//   dpm(\"form id\");\n//   dpm($form);\n\n//     print '<pre>'; print_r(\"form\"); print '</pre>';\n//   print '<pre>'; print_r($form); print '</pre>';\n\n// //   print '<pre>'; print_r(\"request\"); print '</pre>';\n// //   print '<pre>'; print_r($_REQUEST); print '</pre>';\n// print '<pre>'; print_r(\"payment method\"); print '</pre>';\n//   print '<pre>'; print_r($payment_method); print '</pre>';\n// //   exit;\n//   // $order = create_an_order();\n\n// // print '<pre>'; print_r(\"order\"); print '</pre>';\n// // print '<pre>'; print_r($order); print '</pre>';exit;\n// $amount = $order->commerce_order_total[LANGUAGE_NONE][0]['amount'];\n// // drupal_add_html_head('<meta name=\"viewport\" content=\"width=device-width”>');\n// // $form['#attached']['js'][] = \"https://checkout.razorpay.com/v1/checkout.js\";\n\n// // drupal_add_js(array('commerce_razorpay' => array('amount' => $amount, 'key' => 'rzp_test_6VOiSPZ8ClqeCo', 'logo' => drupal_get_path('module', 'commerce_razorpay') .'/logo.jpg', 'order_id' => $order->order_id)), array('type' => 'setting'));\n\n// // $form['#attached']['js'][] = drupal_get_path('module', 'commerce_razorpay').\"/commerce_razorpay.js\";\n\n//   // dpm(\"hook redirect called\");\n//   // dpm(\"order\");\n//   // dpm($order);\n//   // dpm(\"payment method\");\n//   // dpm($payment_method);\n//   $wrapper = entity_metadata_wrapper('commerce_order', $order);\n//   $billing_address = $wrapper->commerce_customer_billing->commerce_customer_address->value();\n\n//   // Set all data in array.\n//   $data = array(\n//     'key' => $payment_method['settings']['key_id'],\n//     'amount' => $wrapper->commerce_order_total->amount->value() / 100,\n//     'productinfo' => 'Product order ID:' . $order->order_id,\n//     'name' => $billing_address['name_line'],\n//     'email' => $order->mail,\n//     // 'phone' => $billing_address['pm_phone'],\n//     // 'furl' => url('checkout/' . $order->order_id . '/payment/back/' . $order->data['payment_redirect_key'], array('absolute' => TRUE)),\n//     // 'surl' => url('checkout/' . $order->order_id . '/payment/return/' . $order->data['payment_redirect_key'], array('absolute' => TRUE)),\n//   );\n//   // Peform phone verification if its all digits otherwise go back.\n//   // if (!preg_match('/^\\d{10}$/', $data['phone'])) {\n//   //   drupal_set_message(t('Phone number should be 10 digit number.'), 'error');\n//   //   commerce_payment_redirect_pane_previous_page($order);\n//   //   return '';\n//   // }\n//   // Check if all data are available else generate hash.\n//   if (!isset($data['key'])) {\n//     drupal_set_message(t('Required Information are not available. Please Try again...'), 'error');\n//     commerce_payment_redirect_pane_previous_page($order);\n//     return '';\n//   }\n//   // else {\n\n//   // // Redirect URI.\n//   // if (($payment_method['settings']['url']) == 1) {\n//   //   $url = url('https://secure.payu.in/_payment');\n//   // }\n//   // else {\n//   //   $url = url('https://test.payu.in/_payment');\n//   // }\n\n//  // capture_payment($payment_id, $amount = 100, $order_id = 1);\n//   // if (isset($hash)) {\n//   //   $form['#action'] = $url;\n//   // }\n//   // else {\n//   //   drupal_set_message(t('Critical Information not generated. Please Try again.'), 'error');\n//   //   commerce_payment_redirect_pane_previous_page($order);\n//   //   return '';\n//   // }\n//   return $form;\n// }\n\n// /**\n//  * Implements hook_redirect_form_validate().\n//  */\n// function commerce_razorpay_redirect_form_validate($order, $payment_method) {\n//   watchdog('inside redirect form validate', 'message');\n//   print '<pre>'; print_r(\"request\"); print '</pre>';\n//   print '<pre>'; print_r($_REQUEST); print '</pre>';\n// print '<pre>'; print_r(\"request\"); print '</pre>';\n//   print '<pre>'; print_r($payment_method); print '</pre>';\n//   exit;\n//   $message = t('Security error ip Address was: @ip', array('@ip' => ip_address()));\n//   $payload['status'] = $_REQUEST[\"status\"];\n//   $payload['firstname'] = $_REQUEST[\"firstname\"];\n//   $payload['amount'] = $_REQUEST[\"amount\"];\n//   $payload['txnid'] = $_REQUEST[\"txnid\"];\n//   $payload['hash'] = $_REQUEST[\"hash\"];\n//   $payload['key'] = $_REQUEST[\"key\"];\n//   $payload['productinfo'] = $_REQUEST[\"productinfo\"];\n//   $payload['email'] = $_REQUEST[\"email\"];\n//   $payload['salt'] = $payment_method['settings']['salt'];\n\n\n//     // Here you need to put in the routines for a successful.\n//     // Transaction such as sending an email to customer.\n//     // Setting database status, informing logistics etc etc.\n//     commerce_razorpay_transaction($order, $payment_method, $payload['status'], $payload['txnid'], $payload);\n//     return drupal_set_message(t('Thank you for shopping with us. Your account has been charged and your transaction is successful.'));\n\n// }\n\n\n/**\n * Payment method callback: submit form.\n */\n// function commerce_razorpay_submit_form($payment_method, $pane_values, $checkout_pane, $order) {\n//   module_load_include('inc', 'commerce_payment', 'includes/commerce_payment.credit_card');\n\n//   // Default to a known test credit card number. For valid numbers of other card\n//   // types see: http://www.rimmkaufman.com/blog/credit-card-test-numbers/09112007/\n//   // return commerce_payment_credit_card_form(array(), array('number' => '4111111111111111'));\n// }\n\n\n\n// function commerce_razorpay_submit_form_submit($payment_method, $pane_form, $pane_values, $order, $charge) {\n//   // print '<pre>'; print_r(\"commerce razorpay submit form submit\"); print '</pre>'; exit;\n// // print '<pre>'; print_r(\"commerce razorpay submit form submit\"); print '</pre>';\n\n//   // $order = commerce_cart_order_load($user->uid);\n//     // $amount = $order->commerce_order_total[LANGUAGE_NONE][0]['amount'];\n//     // // dpm(\"order\");\n//     // // dpm($order);\n//     // drupal_add_html_head('<meta name=\"viewport\" content=\"width=device-width”>');\n//     // $form['#attached']['js'][] = \"https://checkout.razorpay.com/v1/checkout.js\";\n\n//     // drupal_add_js(array('commerce_razorpay' => array('amount' => $amount, 'key' => 'rzp_test_6VOiSPZ8ClqeCo', 'logo' => drupal_get_path('module', 'commerce_razorpay') .'/logo.jpg', 'order_id' => $order->order_id)), array('type' => 'setting'));\n\n//     // $form['#attached']['js'][] = drupal_get_path('module', 'commerce_razorpay').\"/commerce_razorpay.js\";\n\n// }\n\n\n\n/**\n * Payment redirect pane: form callback.\n */\n// function commerce_razorpay_redirect_pane_checkout_form(&$form, &$form_state, $checkout_pane, $order) {\n\n // print '<pre>'; print_r(\"inside comerce razor pay redirect page checkout\"); print '</pre>'; exit;\n //  // First load the order's specified payment method instance.\n //  if (!empty($order->data['payment_method'])) {\n //    $payment_method = commerce_payment_method_instance_load($order->data['payment_method']);\n //  }\n //  else {\n //    $payment_method = FALSE;\n //  }\n\n //  // If the payment method doesn't exist or does not require a redirect...\n //  if (!$payment_method || !$payment_method['offsite']) {\n //    if (!$payment_method) {\n //      $log = t('Customer skipped the Payment page because no payment was required.');\n //    }\n //    else {\n //      $log = t('Customer skipped the Payment page because payment was already submitted.');\n //    }\n\n //    // Advance the customer to the next step of the checkout process.\n //    commerce_payment_redirect_pane_next_page($order, $log);\n //    drupal_goto(commerce_checkout_order_uri($order));\n //  }\n\n //  // If the user came to the cancel URL...\n //  if (arg(3) == 'back' && arg(4) == $order->data['payment_redirect_key']) {\n //    // Perform any payment cancellation functions if necessary.\n //    if ($callback = commerce_payment_method_callback($payment_method, 'redirect_form_back')) {\n //      $callback($order, $payment_method);\n //    }\n\n //    // Send the customer to the previous step of the checkout process.\n //    commerce_payment_redirect_pane_previous_page($order, t('Customer canceled payment at the payment gateway.'));\n //    drupal_goto(commerce_checkout_order_uri($order));\n //  }\n\n //  // If the user came to the return URL...\n //  if (arg(3) == 'return' && arg(4) == $order->data['payment_redirect_key']) {\n //    // Check for a validate handler on return.\n //    $validate_callback = commerce_payment_method_callback($payment_method, 'redirect_form_validate');\n\n //    // If there is no validate handler or if there is and it isn't FALSE...\n //    if (!$validate_callback || $validate_callback($order, $payment_method) !== FALSE) {\n //      // Perform any submit functions if necessary.\n //      if ($callback = commerce_payment_method_callback($payment_method, 'redirect_form_submit')) {\n //        $callback($order, $payment_method);\n //      }\n\n //      // Send the customer on to the next checkout page.\n //      commerce_payment_redirect_pane_next_page($order, t('Customer successfully submitted payment at the payment gateway.'));\n //      drupal_goto(commerce_checkout_order_uri($order));\n //    }\n //    else {\n //      // Otherwise display the failure message and send the customer back.\n //      drupal_set_message(t('Payment failed at the payment server. Please review your information and try again.'), 'error');\n\n //      commerce_payment_redirect_pane_previous_page($order, t('Customer payment submission failed at the payment gateway.'));\n //      drupal_goto(commerce_checkout_order_uri($order));\n //    }\n //  }\n\n //  // If the function to build the redirect form exists...\n //  if ($callback = commerce_payment_method_callback($payment_method, 'redirect_form')) {\n //    // Generate a key to use in the return URL from the redirected service if it\n //    // does not already exist.\n //    if (empty($order->data['payment_redirect_key'])) {\n //      $order->data['payment_redirect_key'] = drupal_hash_base64(time());\n //      commerce_order_save($order);\n //    }\n\n //    // If the payment method has the 'offsite_autoredirect' option enabled, add\n //    // the redirection behavior.\n //    if (!empty($payment_method['offsite_autoredirect'])) {\n\n //      $amount = $order->commerce_order_total[LANGUAGE_NONE][0]['amount'];\n //    // dpm(\"order\");\n //    // dpm($order);\n //    drupal_add_html_head('<meta name=\"viewport\" content=\"width=device-width”>');\n //    $form['#attached']['js'][] = \"https://checkout.razorpay.com/v1/checkout.js\";\n\n //    drupal_add_js(array('commerce_razorpay' => array('amount' => $amount, 'key' => 'rzp_test_6VOiSPZ8ClqeCo', 'logo' => drupal_get_path('module', 'commerce_razorpay') .'/logo.jpg', 'order_id' => $order->order_id)), array('type' => 'setting'));\n //      $form['#attached']['js'][] = drupal_get_path('module', 'commerce_razorpay') . '/commerce_razorpay.js';\n //      $form['help']['#markup'] = '<div class=\"checkout-help\">' . t('Please wait while you are redirected to the payment server. If nothing happens within 10 seconds, please click on the button below.') . '</div>';\n //    }\n\n //    // Merge the new form into the current form array, preserving the help text\n //    // if it exists. We also add a wrapper so the form can be easily submitted.\n //    $form += drupal_get_form($callback, $order, $payment_method);\n\n //    $form['#prefix'] = '<div class=\"payment-razor-form\">';\n //    $form['#suffix'] = '</div>';\n //  }\n //  else {\n //    // Alert the administrator that the module does not provide a required form.\n //    drupal_set_message(t('The %title payment method indicates it is offsite but does not define the necessary form to process the redirect.', array('%title' => $payment_method['title'])), 'error');\n //  }\n// }\n\n/**\n * PayUMoney finish transaction.\n */\nfunction commerce_razorpay_transaction($order, $payment_method, $status, $txnid, $payload) {\n  // $wrapper = entity_metadata_wrapper('commerce_order', $order);\n  // $currency = $wrapper->commerce_order_total->currency_code->value();\n  // $amount = $wrapper->commerce_order_total->amount->value();\n\n  // $transaction = commerce_payment_transaction_new('commerce_razorpay', $order->order_id);\n  // $transaction->instance_id = $payment_method['instance_id'];\n  // $transaction->amount = $amount;\n  // $transaction->currency_code = $currency;\n  // $transaction->remote_id = $txnid;\n  // $transaction->payload = $payload;\n  // $instance = explode('|', $payment_method['instance_id']);\n  // $transaction->payment_method = $instance[0];\n  // $transaction->message = '';\n  // $transaction->message_variables = '';\n\n  // // Succeessful.\n  // if ($status == \"success\") {\n  //   $transaction->remote_status = t('Success');\n  //   $transaction->message = t('Your transation ID is :') . $txnid . t('. Payment received at') . ' ' . date(\"d-m-Y H:i:s\", REQUEST_TIME);\n  //   $transaction->status = COMMERCE_PAYMENT_STATUS_SUCCESS;\n  // }\n  // elseif ($status == \"pending\") {\n  //   // Batch process - Pending orders.\n  //   $transaction->remote_status = t('Pending');\n  //   $transaction->message = t('Your transation ID is :') . $txnid . t('. Payment pending at') . ' ' . date(\"d-m-Y H:i:s\", REQUEST_TIME);\n  //   $transaction->status = COMMERCE_PAYMENT_STATUS_PENDING;\n  // }\n  // elseif ($status == \"failure\") {\n  //   // Failed transaction.\n  //   $transaction->remote_status = t('Failure');\n  //   $transaction->message = t('Your transation ID is :') . $txnid . t('. Payment failed at') . ' ' . date(\"d-m-Y H:i:s\", REQUEST_TIME);\n  //   $transaction->status = COMMERCE_PAYMENT_STATUS_FAILURE;\n  // }\n  // commerce_payment_transaction_save($transaction);\n}\n",
+			"file": "commerce_razorpay.module",
+			"file_size": 35608,
+			"file_write_time": 131317440230000000,
+			"settings":
+			{
+				"buffer_size": 35614,
+				"encoding": "UTF-8",
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"contents": "Searching 7817 files for \"https://checkout.razorpay.com/v1/checkout.js\"\n\n/Applications/MAMP/htdocs/commerce_kickstart/profiles/commerce_kickstart/modules/contrib/commerce/modules/payment/includes/commerce_payment.checkout_pane.inc:\n  401        $amount = $order->commerce_order_total[LANGUAGE_NONE][0]['amount'];\n  402  // drupal_add_html_head('<meta name=\"viewport\" content=\"width=device-width”>');\n  403: // $form['#attached']['js'][] = \"https://checkout.razorpay.com/v1/checkout.js\";\n  404  \n  405  // drupal_add_js(array('commerce_razorpay' => array('amount' => $amount, 'key' => 'rzp_test_6VOiSPZ8ClqeCo', 'logo' => drupal_get_path('module', 'commerce_razorpay') .'/logo.jpg', 'order_id' => $order->order_id)), array('type' => 'setting'));\n\n/Applications/MAMP/htdocs/commerce_kickstart/sites/all/modules/custom/commerce_razorpay/commerce_razorpay.checkout.inc:\n    8      '#markup' => '<button id=\"rzp-button1\">Pay</button>');\n    9  // drupal_add_js(drupal_get_path('module', 'commerce_razorpay') . '/commerce_razorpay.js');\n   10: // drupal_add_js('https://checkout.razorpay.com/v1/checkout.js');\n   11  $order = create_an_order();\n   12  \n   ..\n   25  \n   26  $path1 = drupal_get_path('module', 'commerce_razorpay') . '/custom1.js';\n   27: $path1 = 'https://checkout.razorpay.com/v1/checkout.js';\n   28  // $form['test'] = array(\n   29  //     '#type' => 'markup',\n   30: //     '#markup' => '<script src= \"https://checkout.razorpay.com/v1/checkout.js\"\n   31  //     data-key=\"rzp_test_6VOiSPZ8ClqeCo\"\n   32  //     data-amount=\"5000\"\n   ..\n   42  \n   43  \n   44: $form['#attached']['js'][] = \"https://checkout.razorpay.com/v1/checkout.js\";\n   45  // $settings = array('path' => drupal_get_path('module', 'commerce_razorpay').\"/commerce_razorpay.js\",\n   46  // 'amount' => 100,\n\n/Applications/MAMP/htdocs/commerce_kickstart/sites/all/modules/custom/commerce_razorpay/commerce_razorpay.js:\n   93        //     payment_id = response.razorpay_payment_id;\n   94        //   },\n   95:       //   // src: \"https://checkout.razorpay.com/v1/checkout.js\",\n   96        // });\n   97  \n\n/Applications/MAMP/htdocs/commerce_kickstart/sites/all/modules/custom/commerce_razorpay/commerce_razorpay.module:\n  185  //       $amount = $order->commerce_order_total[LANGUAGE_NONE][0]['amount'];\n  186  // // drupal_add_html_head('<meta name=\"viewport\" content=\"width=device-width”>');\n  187: // $form['#attached']['js'][] = \"https://checkout.razorpay.com/v1/checkout.js\";\n  188  \n  189  // drupal_add_js(array('commerce_razorpay' => array('amount' => $amount, 'key' => 'rzp_test_6VOiSPZ8ClqeCo', 'logo' => drupal_get_path('module', 'commerce_razorpay') .'/logo.jpg', 'order_id' => $order->order_id)), array('type' => 'setting'));\n  ...\n  236        // $amount = $order->commerce_order_total[LANGUAGE_NONE][0]['amount'];\n  237  // drupal_add_html_head('<meta name=\"viewport\" content=\"width=device-width”>');\n  238: // $form['#attached']['js'][] = \"https://checkout.razorpay.com/v1/checkout.js\";\n  239  \n  240  // drupal_add_js(array('commerce_razorpay' => array('amount' => $amount, 'key' => 'rzp_test_6VOiSPZ8ClqeCo', 'logo' => drupal_get_path('module', 'commerce_razorpay') .'/logo.jpg', 'order_id' => $order_id)), array('type' => 'setting'));\n  ...\n  296      '#value' => t('Proceed to payment'),\n  297    );\n  298:   $form['#attached']['js'][] = \"https://checkout.razorpay.com/v1/checkout.js\";\n  299  \n  300  \n  ...\n  530      // // dpm($order);\n  531      // drupal_add_html_head('<meta name=\"viewport\" content=\"width=device-width”>');\n  532:     // $form['#attached']['js'][] = \"https://checkout.razorpay.com/v1/checkout.js\";\n  533  \n  534      // drupal_add_js(array('commerce_razorpay' => array('amount' => $amount, 'key' => 'rzp_test_6VOiSPZ8ClqeCo', 'logo' => drupal_get_path('module', 'commerce_razorpay') .'/logo.jpg', 'order_id' => $order->order_id)), array('type' => 'setting'));\n  ...\n  559  // $amount = $order->commerce_order_total[LANGUAGE_NONE][0]['amount'];\n  560  // // drupal_add_html_head('<meta name=\"viewport\" content=\"width=device-width”>');\n  561: // // $form['#attached']['js'][] = \"https://checkout.razorpay.com/v1/checkout.js\";\n  562  \n  563  // // drupal_add_js(array('commerce_razorpay' => array('amount' => $amount, 'key' => 'rzp_test_6VOiSPZ8ClqeCo', 'logo' => drupal_get_path('module', 'commerce_razorpay') .'/logo.jpg', 'order_id' => $order->order_id)), array('type' => 'setting'));\n  ...\n  671  //     // // dpm($order);\n  672  //     // drupal_add_html_head('<meta name=\"viewport\" content=\"width=device-width”>');\n  673: //     // $form['#attached']['js'][] = \"https://checkout.razorpay.com/v1/checkout.js\";\n  674  \n  675  //     // drupal_add_js(array('commerce_razorpay' => array('amount' => $amount, 'key' => 'rzp_test_6VOiSPZ8ClqeCo', 'logo' => drupal_get_path('module', 'commerce_razorpay') .'/logo.jpg', 'order_id' => $order->order_id)), array('type' => 'setting'));\n  ...\n  763   //    // dpm($order);\n  764   //    drupal_add_html_head('<meta name=\"viewport\" content=\"width=device-width”>');\n  765:  //    $form['#attached']['js'][] = \"https://checkout.razorpay.com/v1/checkout.js\";\n  766  \n  767   //    drupal_add_js(array('commerce_razorpay' => array('amount' => $amount, 'key' => 'rzp_test_6VOiSPZ8ClqeCo', 'logo' => drupal_get_path('module', 'commerce_razorpay') .'/logo.jpg', 'order_id' => $order->order_id)), array('type' => 'setting'));\n\n13 matches across 4 files\n\n\nSearching 7818 files for \"inside offsite_autoredirect\"\n\n/Applications/MAMP/htdocs/commerce_kickstart/sites/all/modules/custom/commerce_razorpay/commerce_razorpay.module:\n  181  //     if (!empty($payment_method['offsite_autoredirect'])) {\n  182  \n  183: //       print '<pre>'; print_r(\"inside offsite_autoredirect\"); print '</pre>';\n  184  \n  185  //       $amount = $order->commerce_order_total[LANGUAGE_NONE][0]['amount'];\n  ...\n  232      // the redirection behavior.\n  233  \n  234:       // print '<pre>'; print_r(\"inside offsite_autoredirect\"); print '</pre>';\n  235  \n  236        // $amount = $order->commerce_order_total[LANGUAGE_NONE][0]['amount'];\n\n2 matches in 1 file\n\n\nSearching 7818 files for \"Example payment\"\n\n/Applications/MAMP/htdocs/commerce_kickstart/profiles/commerce_kickstart/modules/commerce_kickstart/commerce_kickstart_help/commerce_kickstart_help.module:\n  212    $form['prices_payments_taxes']['payment_ethods']['content'] = array(\n  213      '#type' => 'item',\n  214:     '#markup' => '<p>There are payment gateways and there are service providers that have partnered with Commerce Guys. There are 50+ payment providers that have been integrated with Drupal Commerce in the last year. Out of the box we have provided an example payment method to show what is possible.</p>\n  215      <a href=\"/admin/commerce/config/payment-methods\">Go to the Payment Methods</a>\n  216      <a href=\"http://www.drupalcommerce.org/commerce-kickstart-2/how-download-and-setup-payment-method\">Learn more about Payment Methods</a>',\n\n/Applications/MAMP/htdocs/commerce_kickstart/profiles/commerce_kickstart/modules/contrib/commerce/modules/checkout/tests/commerce_checkout.test:\n  160      $this->assertText(trim($address_info['postal_code']), t('Billing information for \\'postal_code\\' is correct'));\n  161      $this->assertText('United States', t('Billing information country is correct'));\n  162:     $this->assertText('Example payment', t('Example payment method pane is present'));\n  163  \n  164      // Load the order to check the status.\n  ...\n  321      $this->assertText(trim($address_info['postal_code']), t('Billing information for \\'postal_code\\' is correct'));\n  322      $this->assertText('United States', t('Billing information country is correct'));\n  323:     $this->assertText('Example payment', t('Example payment method pane is present'));\n  324      $this->assertText($user_mail, t('Account information is correct'));\n  325  \n\n/Applications/MAMP/htdocs/commerce_kickstart/profiles/commerce_kickstart/modules/contrib/commerce/modules/payment/modules/commerce_payment_example.info:\n    1  name = Payment Method Example\n    2: description = Provides an example payment method for testing and development.\n    3  package = Commerce\n    4  dependencies[] = commerce\n\n/Applications/MAMP/htdocs/commerce_kickstart/profiles/commerce_kickstart/modules/contrib/commerce/modules/payment/modules/commerce_payment_example.module:\n    3  /**\n    4   * @file\n    5:  * Provides an example payment method for Drupal Commerce for testing and\n    6   *   development.\n    7   */\n    .\n   15  \n   16    $payment_methods['commerce_payment_example'] = array(\n   17:     'title' => t('Example payment'),\n   18      'description' => t('Demonstrates credit card payment during checkout and serves as a development example.'),\n   19      'active' => TRUE,\n   ..\n   73  \n   74  /**\n   75:  * Creates an example payment transaction for the specified charge amount.\n   76   *\n   77   * @param $payment_method\n\n/Applications/MAMP/htdocs/commerce_kickstart/profiles/commerce_kickstart/modules/contrib/commerce/modules/payment/tests/commerce_payment_ui.test:\n   96      $this->createOrderAndGoToPayment();\n   97  \n   98:     $this->assertText('Example payment', t('Example payment method pane is present'));\n   99  \n  100      // Finish checkout process.\n  ...\n  187  \n  188      $this->assertTitle(t('Payment methods') . ' | Drupal', t('We are now in the payment methods page'));\n  189:     $this->assertText(t('Example payment'), t('Example payment rule is present'));\n  190  \n  191:     // Go to edit example payment rule.\n  192:     $this->clickLink(t('Example payment'));\n  193  \n  194      // Adding a new condition.\n  ...\n  213      $this->createOrderAndGoToPayment($this->store_customer, array($product->product_id => 20));\n  214      // Check that the payment method example is *not* there.\n  215:     $this->assertNoText('Example payment', t('Example payment method panel is not present'));\n  216  \n  217      // Create a more than $50 order (40 products $2 each).\n  ...\n  219      $this->createOrderAndGoToPayment($this->store_customer, array($product->product_id => 40));\n  220      // Check that the payment method example is there.\n  221:     $this->assertText('Example payment', t('Example payment method panel is present'));\n  222    }\n  223  \n  ...\n  308  \n  309      // Check if the payment method exists and it's listed.\n  310:     $this->assertText(t('Dummy Payment Method Offsite'), t('Offsite example payment method is listed in the payment methods administration page'));\n  311  \n  312      // Login with store customer and access to checkout.\n  ...\n  316      // Process the order and check if the offsite payment is working.\n  317      $this->drupalPost(NULL, array(), t('Continue to next step'));\n  318:     $this->assertText(t('Dummy Payment Method Offsite'), t('Offsite example payment method is listed in the checkout process form'));\n  319      $this->drupalPostAJAX(NULL, array('commerce_payment[payment_method]' => 'commerce_payment_dummy_offsite|commerce_payment_commerce_payment_dummy_offsite'), 'commerce_payment[payment_method]');\n  320      $this->drupalPost(NULL, array(), t('Continue to next step'));\n\n21 matches across 5 files\n",
+			"settings":
+			{
+				"buffer_size": 11172,
+				"line_ending": "Unix",
+				"name": "Find Results",
+				"scratch": true
+			}
+		},
+		{
+			"file": "/Applications/MAMP/htdocs/commerce_kickstart/profiles/commerce_kickstart/modules/contrib/commerce/modules/payment/modules/commerce_payment_example.info",
+			"settings":
+			{
+				"buffer_size": 345,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "/Applications/MAMP/htdocs/commerce_kickstart/profiles/commerce_kickstart/modules/contrib/commerce/modules/payment/includes/commerce_payment.checkout_pane.inc",
+			"settings":
+			{
+				"buffer_size": 20572,
+				"encoding": "UTF-8",
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "commerce_razorpay.js",
+			"settings":
+			{
+				"buffer_size": 7474,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"contents": "{\n\t\"folders\":\n\t[\n\t\t{\n\t\t\t\"path\": \"/Applications/MAMP/htdocs/commerce_kickstart\"\n\t\t}\n\t]\n}\n",
+			"file": "razorpay-xdebug.sublime-project",
+			"file_size": 88,
+			"file_write_time": 131325839200000000,
+			"settings":
+			{
+				"buffer_size": 88,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "/Applications/MAMP/htdocs/commerce_kickstart/index.php",
+			"settings":
+			{
+				"buffer_size": 843,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"contents": "",
+			"settings":
+			{
+				"buffer_size": 0,
+				"line_ending": "Unix",
+				"name": "Xdebug Context",
+				"read_only": true,
+				"scratch": true
+			}
+		},
+		{
+			"contents": "",
+			"settings":
+			{
+				"buffer_size": 0,
+				"line_ending": "Unix",
+				"name": "Xdebug Watch",
+				"read_only": true,
+				"scratch": true
+			}
+		},
+		{
+			"contents": "",
+			"settings":
+			{
+				"buffer_size": 0,
+				"line_ending": "Unix",
+				"name": "Xdebug Stack",
+				"read_only": true,
+				"scratch": true
+			}
+		},
+		{
+			"contents": "=> /Applications/MAMP/htdocs/commerce_kickstart/profiles/commerce_kickstart/modules/contrib/commerce/modules/payment/includes/commerce_payment.checkout_pane.inc\n\t|+| 56\n\t|+| 65\n\t|+| 76\n\t|+| 104\n\t|+| 147\n\t|+| 148\n\t|+| 298\n\t|+| 323\n\t|+| 382\n\t|+| 386\n\t|+| 388\n\t|+| 397\n\t|+| 410\n=> /Applications/MAMP/htdocs/commerce_kickstart/sites/all/modules/custom/commerce_razorpay/commerce_razorpay.js\n\t|+| 144\n=> /Applications/MAMP/htdocs/commerce_kickstart/sites/all/modules/custom/commerce_razorpay/commerce_razorpay.module\n\t|+| 225\n\t|+| 228\n\t|+| 229\n\t|+| 249\n\t|+| 251\n\t|+| 293\n\t|+| 298\n\t|+| 301\n\t|+| 302\n\t|+| 303\n",
+			"settings":
+			{
+				"buffer_size": 602,
+				"line_ending": "Unix",
+				"name": "Xdebug Breakpoint",
+				"read_only": true,
+				"scratch": true
+			}
+		}
+	],
+	"build_system": "",
+	"build_system_choices":
+	[
+	],
+	"build_varint": "",
+	"command_palette":
+	{
+		"height": 392.0,
+		"last_filter": "in",
+		"selected_items":
+		[
+			[
+				"in",
+				"Package Control: Install Package"
+			],
+			[
+				"install",
+				"Package Control: Install Package"
+			],
+			[
+				"key",
+				"Preferences: Key Bindings"
+			]
+		],
+		"width": 485.0
+	},
+	"console":
+	{
+		"height": 126.0,
+		"history":
+		[
+			"import urllib.request,os,hashlib; h = 'df21e130d211cfc94d9b0905775a7c0f' + '1e3d39e33b79698005270310898eea76'; pf = 'Package Control.sublime-package'; ipp = sublime.installed_packages_path(); urllib.request.install_opener( urllib.request.build_opener( urllib.request.ProxyHandler()) ); by = urllib.request.urlopen( 'http://packagecontrol.io/' + pf.replace(' ', '%20')).read(); dh = hashlib.sha256(by).hexdigest(); print('Error validating download (got %s instead of %s), please try manual install' % (dh, h)) if dh != h else open(os.path.join( ipp, pf), 'wb' ).write(by)"
+		]
+	},
+	"distraction_free":
+	{
+		"menu_visible": true,
+		"show_minimap": false,
+		"show_open_files": false,
+		"show_tabs": false,
+		"side_bar_visible": false,
+		"status_bar_visible": false
+	},
+	"expanded_folders":
+	[
+		"/Applications/MAMP/htdocs/commerce_kickstart",
+		"/Applications/MAMP/htdocs/commerce_kickstart/profiles",
+		"/Applications/MAMP/htdocs/commerce_kickstart/profiles/commerce_kickstart",
+		"/Applications/MAMP/htdocs/commerce_kickstart/profiles/commerce_kickstart/modules",
+		"/Applications/MAMP/htdocs/commerce_kickstart/profiles/commerce_kickstart/modules/contrib",
+		"/Applications/MAMP/htdocs/commerce_kickstart/profiles/commerce_kickstart/modules/contrib/commerce",
+		"/Applications/MAMP/htdocs/commerce_kickstart/profiles/commerce_kickstart/modules/contrib/commerce/modules",
+		"/Applications/MAMP/htdocs/commerce_kickstart/profiles/commerce_kickstart/modules/contrib/commerce/modules/payment",
+		"/Applications/MAMP/htdocs/commerce_kickstart/profiles/commerce_kickstart/modules/contrib/commerce/modules/payment/includes",
+		"/Applications/MAMP/htdocs/commerce_kickstart/profiles/commerce_kickstart/modules/contrib/commerce/modules/payment/modules",
+		"/Applications/MAMP/htdocs/commerce_kickstart/sites",
+		"/Applications/MAMP/htdocs/commerce_kickstart/sites/all",
+		"/Applications/MAMP/htdocs/commerce_kickstart/sites/all/modules",
+		"/Applications/MAMP/htdocs/commerce_kickstart/sites/all/modules/custom",
+		"/Applications/MAMP/htdocs/commerce_kickstart/sites/all/modules/custom/commerce_razorpay"
+	],
+	"file_history":
+	[
+		"/Applications/MAMP/htdocs/commerce_kickstart/profiles/commerce_kickstart/modules/contrib/commerce/modules/payment/includes/commerce_payment.credit_card.inc",
+		"/Applications/MAMP/htdocs/commerce_kickstart/sites/all/modules/custom/commerce_razorpay/commerce_razorpay.info"
+	],
+	"find":
+	{
+		"height": 35.0
+	},
+	"find_in_files":
+	{
+		"height": 93.0,
+		"where_history":
+		[
+			"/Applications/MAMP/htdocs/commerce_kickstart"
+		]
+	},
+	"find_state":
+	{
+		"case_sensitive": false,
+		"find_history":
+		[
+			"Example payment",
+			"commerce_razorpay_commerce_payment_method_redirect_form",
+			"inside offsite_autoredirect",
+			"exit",
+			"alert",
+			"commerce_razorpay_commerce_payment_method_redirect_form",
+			"https://checkout.razorpay.com/v1/checkout.js"
+		],
+		"highlight": true,
+		"in_selection": false,
+		"preserve_case": false,
+		"regex": false,
+		"replace_history":
+		[
+		],
+		"reverse": false,
+		"show_context": true,
+		"use_buffer2": true,
+		"whole_word": false,
+		"wrap": true
+	},
+	"groups":
+	[
+		{
+			"selected": 2,
+			"sheets":
+			[
+				{
+					"buffer": 0,
+					"file": "commerce_razorpay.module",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 35614,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								13843,
+								13843
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/PHP/PHP.sublime-syntax",
+							"tab_size": 2,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 4518.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 1,
+					"type": "text"
+				},
+				{
+					"buffer": 1,
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 11172,
+						"regions":
+						{
+							"match":
+							{
+								"flags": 112,
+								"regions":
+								[
+									[
+										440,
+										484
+									],
+									[
+										1056,
+										1100
+									],
+									[
+										1258,
+										1302
+									],
+									[
+										1415,
+										1459
+									],
+									[
+										1602,
+										1646
+									],
+									[
+										2008,
+										2052
+									],
+									[
+										2412,
+										2456
+									],
+									[
+										2934,
+										2978
+									],
+									[
+										3337,
+										3381
+									],
+									[
+										3571,
+										3615
+									],
+									[
+										4097,
+										4141
+									],
+									[
+										4585,
+										4629
+									],
+									[
+										5068,
+										5112
+									],
+									[
+										5693,
+										5720
+									],
+									[
+										5926,
+										5953
+									],
+									[
+										6655,
+										6670
+									],
+									[
+										7338,
+										7353
+									],
+									[
+										7359,
+										7374
+									],
+									[
+										7711,
+										7726
+									],
+									[
+										7732,
+										7747
+									],
+									[
+										8086,
+										8101
+									],
+									[
+										8402,
+										8417
+									],
+									[
+										8599,
+										8614
+									],
+									[
+										8813,
+										8828
+									],
+									[
+										9149,
+										9164
+									],
+									[
+										9170,
+										9185
+									],
+									[
+										9418,
+										9433
+									],
+									[
+										9440,
+										9455
+									],
+									[
+										9509,
+										9524
+									],
+									[
+										9562,
+										9577
+									],
+									[
+										9837,
+										9852
+									],
+									[
+										9858,
+										9873
+									],
+									[
+										10181,
+										10196
+									],
+									[
+										10202,
+										10217
+									],
+									[
+										10420,
+										10435
+									],
+									[
+										10803,
+										10818
+									]
+								],
+								"scope": ""
+							}
+						},
+						"selection":
+						[
+							[
+								8004,
+								8004
+							]
+						],
+						"settings":
+						{
+							"detect_indentation": false,
+							"line_numbers": false,
+							"output_tag": 3,
+							"result_base_dir": "",
+							"result_file_regex": "^([^ \t].*):$",
+							"result_line_regex": "^ +([0-9]+):",
+							"scroll_past_end": true,
+							"syntax": "Packages/Default/Find Results.hidden-tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 2007.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 2,
+					"type": "text"
+				},
+				{
+					"buffer": 2,
+					"file": "/Applications/MAMP/htdocs/commerce_kickstart/profiles/commerce_kickstart/modules/contrib/commerce/modules/payment/modules/commerce_payment_example.info",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 345,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								345,
+								345
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Text/Plain text.tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 0,
+					"type": "text"
+				},
+				{
+					"buffer": 3,
+					"file": "/Applications/MAMP/htdocs/commerce_kickstart/profiles/commerce_kickstart/modules/contrib/commerce/modules/payment/includes/commerce_payment.checkout_pane.inc",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 20572,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								17510,
+								17510
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/PHP/PHP.sublime-syntax",
+							"tab_size": 2,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 5973.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 3,
+					"type": "text"
+				},
+				{
+					"buffer": 4,
+					"file": "commerce_razorpay.js",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 7474,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								4213,
+								4213
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/JavaScript/JavaScript.sublime-syntax",
+							"tab_size": 2,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 1920.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 4,
+					"type": "text"
+				},
+				{
+					"buffer": 5,
+					"file": "razorpay-xdebug.sublime-project",
+					"semi_transient": true,
+					"settings":
+					{
+						"buffer_size": 88,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								0,
+								0
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/JavaScript/JSON.sublime-syntax"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 5,
+					"type": "text"
+				},
+				{
+					"buffer": 6,
+					"file": "/Applications/MAMP/htdocs/commerce_kickstart/index.php",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 843,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								472,
+								472
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/PHP/PHP.sublime-syntax"
+						},
+						"translation.x": 0.0,
+						"translation.y": 21.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 6,
+					"type": "text"
+				}
+			]
+		},
+		{
+			"selected": 0,
+			"sheets":
+			[
+				{
+					"buffer": 7,
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 0,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								0,
+								0
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Xdebug Client/Xdebug.tmLanguage",
+							"word_wrap": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 7,
+					"type": "text"
+				},
+				{
+					"buffer": 8,
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 0,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								0,
+								0
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Xdebug Client/Xdebug.tmLanguage",
+							"word_wrap": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 8,
+					"type": "text"
+				}
+			]
+		},
+		{
+			"selected": 0,
+			"sheets":
+			[
+				{
+					"buffer": 9,
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 0,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								0,
+								0
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Xdebug Client/Xdebug.tmLanguage",
+							"word_wrap": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 9,
+					"type": "text"
+				},
+				{
+					"buffer": 10,
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 602,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								602,
+								602
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Xdebug Client/Xdebug.tmLanguage",
+							"word_wrap": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 10,
+					"type": "text"
+				}
+			]
+		}
+	],
+	"incremental_find":
+	{
+		"height": 23.0
+	},
+	"input":
+	{
+		"height": 0.0
+	},
+	"layout":
+	{
+		"cells":
+		[
+			[
+				0,
+				0,
+				2,
+				1
+			],
+			[
+				0,
+				1,
+				1,
+				2
+			],
+			[
+				1,
+				1,
+				2,
+				2
+			]
+		],
+		"cols":
+		[
+			0.0,
+			0.5,
+			1.0
+		],
+		"rows":
+		[
+			0.0,
+			0.7,
+			1.0
+		]
+	},
+	"menu_visible": true,
+	"output.find_results":
+	{
+		"height": 0.0
+	},
+	"output.xdebug":
+	{
+		"height": 100.0
+	},
+	"pinned_build_system": "",
+	"project": "razorpay-xdebug.sublime-project",
+	"replace":
+	{
+		"height": 42.0
+	},
+	"save_all_on_build": true,
+	"select_file":
+	{
+		"height": 0.0,
+		"last_filter": "",
+		"selected_items":
+		[
+			[
+				"commerce_payment_ex",
+				"profiles/commerce_kickstart/modules/contrib/commerce/modules/payment/modules/commerce_payment_example.info"
+			],
+			[
+				"index",
+				"index.php"
+			],
+			[
+				"",
+				"sites/all/modules/custom/commerce_razorpay/commerce_razorpay.info"
+			],
+			[
+				"commerce_ra",
+				"sites/all/modules/custom/commerce_razorpay/commerce_razorpay.info"
+			],
+			[
+				"index.",
+				"index.php"
+			]
+		],
+		"width": 0.0
+	},
+	"select_project":
+	{
+		"height": 0.0,
+		"last_filter": "",
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"select_symbol":
+	{
+		"height": 0.0,
+		"last_filter": "",
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"selected_group": 0,
+	"settings":
+	{
+		"xdebug":
+		{
+			"restore_index":
+			{
+				"189":
+				{
+					"group": 0,
+					"index": 0
+				},
+				"204":
+				{
+					"group": 0,
+					"index": 1
+				},
+				"205":
+				{
+					"group": 0,
+					"index": 2
+				},
+				"208":
+				{
+					"group": 2,
+					"index": 1
+				},
+				"209":
+				{
+					"group": 1,
+					"index": 0
+				},
+				"210":
+				{
+					"group": 2,
+					"index": 0
+				},
+				"211":
+				{
+					"group": 1,
+					"index": 1
+				}
+			},
+			"restore_layout":
+			{
+				"cells":
+				[
+					[
+						0,
+						0,
+						2,
+						1
+					],
+					[
+						0,
+						1,
+						1,
+						2
+					],
+					[
+						1,
+						1,
+						2,
+						2
+					]
+				],
+				"cols":
+				[
+					0.0,
+					0.5,
+					1.0
+				],
+				"rows":
+				[
+					0.0,
+					0.825328771398,
+					1.0
+				]
+			}
+		}
+	},
+	"show_minimap": true,
+	"show_open_files": false,
+	"show_tabs": true,
+	"side_bar_visible": true,
+	"side_bar_width": 372.0,
+	"status_bar_visible": true,
+	"template_settings":
+	{
+	}
+}
