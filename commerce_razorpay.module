@@ -1,17 +1,5 @@
 <?php
 use Razorpay\Api\Api;
-// use Drupal\Razorpay\Api;
-// namespace  Razorpay\Api;
-// use Razorpay\Api;
-// namespace Razorpay\Api;
-// function theme_preprocess_html(&$var) {
-//       $script = array(
-//         '#tag' => 'script',
-//         '#attributes' => array('type' => 'text/javascript'),
-//         '#value' => 'Add your javascript here',
-//        );
-//        drupal_add_html_head($script, 'script');
-//     }
 
 /**
  * Administration forms form payment method.
@@ -87,174 +75,17 @@ function commerce_razorpay_commerce_payment_method_info() {
   return $payment_methods;
 }
 
-function commerce_razorpay_commerce_checkout_pane_info_alter(&$checkout_pane)
-{
-
-  // print '<pre>'; print_r("checkout RazorPay"); print '</pre>';
-  // print '<pre>'; print_r($checkout_pane['commerce_razorpay_redirect']['base']); print '</pre>';
-  // $checkout_pane['commerce_razorpay_redirect']['base'] = 'commerce_razor_redirect_pane';
-  // // For each pane I want to validate
-  // $checkout_pane['my_pane_id']['callbacks'] = array(
-  //   'checkout_form_validate' => 'my_module_checkout_review_pane_checkout_form_validate',
-  // );
-  // // etc
-}
-
-// function commerce_razorpay_redirect_pane_checkout_form(&$form, &$form_state, $checkout_pane, $order) {
-
-// print '<pre>'; print_r("commerce_razorpay_redirect_pane checkout form"); print '</pre>';
-//   // First load the order's specified payment method instance.
-//   if (!empty($order->data['payment_method'])) {
-//     $payment_method = commerce_payment_method_instance_load($order->data['payment_method']);
-//   }
-//   else {
-//     $payment_method = FALSE;
-//   }
-
-//   // If the payment method doesn't exist or does not require a redirect...
-//   if (!$payment_method || !$payment_method['offsite']) {
-//     if (!$payment_method) {
-//       $log = t('Customer skipped the Payment page because no payment was required.');
-//     }
-//     else {
-//       $log = t('Customer skipped the Payment page because payment was already submitted.');
-//     }
-
-//     // Advance the customer to the next step of the checkout process.
-//     commerce_payment_redirect_pane_next_page($order, $log);
-//     drupal_goto(commerce_checkout_order_uri($order));
-//   }
-
-//   // If the user came to the cancel URL...
-//   if (arg(3) == 'back' && arg(4) == $order->data['payment_redirect_key']) {
-//     // Perform any payment cancellation functions if necessary.
-//     if ($callback = commerce_payment_method_callback($payment_method, 'redirect_form_back')) {
-//       $callback($order, $payment_method);
-//     }
-
-//     // Send the customer to the previous step of the checkout process.
-//     commerce_payment_redirect_pane_previous_page($order, t('Customer canceled payment at the payment gateway.'));
-//     drupal_goto(commerce_checkout_order_uri($order));
-//   }
-
-//   // If the user came to the return URL...
-//   if (arg(3) == 'return' && arg(4) == $order->data['payment_redirect_key']) {
-//     // Check for a validate handler on return.
-//     $validate_callback = commerce_payment_method_callback($payment_method, 'redirect_form_validate');
-
-//     // If there is no validate handler or if there is and it isn't FALSE...
-//     if (!$validate_callback || $validate_callback($order, $payment_method) !== FALSE) {
-//       // Perform any submit functions if necessary.
-//       if ($callback = commerce_payment_method_callback($payment_method, 'redirect_form_submit')) {
-//         $callback($order, $payment_method);
-//       }
-
-//       // Send the customer on to the next checkout page.
-//       commerce_payment_redirect_pane_next_page($order, t('Customer successfully submitted payment at the payment gateway.'));
-//       drupal_goto(commerce_checkout_order_uri($order));
-//     }
-//     else {
-//       // Otherwise display the failure message and send the customer back.
-//       drupal_set_message(t('Payment failed at the payment server. Please review your information and try again.'), 'error');
-
-//       commerce_payment_redirect_pane_previous_page($order, t('Customer payment submission failed at the payment gateway.'));
-//       drupal_goto(commerce_checkout_order_uri($order));
-//     }
-//   }
-
-//   // If the function to build the redirect form exists...
-//   if ($callback = commerce_payment_method_callback($payment_method, 'redirect_form')) {
-//     print '<pre>'; print_r("commerce_payment_method_callback"); print '</pre>';
-//     // Generate a key to use in the return URL from the redirected service if it
-//     // does not already exist.
-//     if (empty($order->data['payment_redirect_key'])) {
-//       $order->data['payment_redirect_key'] = drupal_hash_base64(time());
-//       print '<pre>'; print_r("payment direct key". $order->data['payment_redirect_key']); print '</pre>';
-//       commerce_order_save($order);
-//       // print '<pre>'; print_r("after order save"); print '</pre>';exit;
-//     }
-//     print '<pre>'; print_r("payment method"); print '</pre>';
-//     print '<pre>'; print_r($payment_method); print '</pre>';
-
-//     // If the payment method has the 'offsite_autoredirect' option enabled, add
-//     // the redirection behavior.
-//     if (!empty($payment_method['offsite_autoredirect'])) {
-
-//       print '<pre>'; print_r("inside offsite_autoredirect"); print '</pre>';
-
-//       $amount = $order->commerce_order_total[LANGUAGE_NONE][0]['amount'];
-// // drupal_add_html_head('<meta name="viewport" content="width=device-width”>');
-// $form['#attached']['js'][] = "https://checkout.razorpay.com/v1/checkout.js";
-
-// drupal_add_js(array('commerce_razorpay' => array('amount' => $amount, 'key' => 'rzp_test_6VOiSPZ8ClqeCo', 'logo' => drupal_get_path('module', 'commerce_razorpay') .'/logo.jpg', 'order_id' => $order->order_id)), array('type' => 'setting'));
-// // $form['#attached']['js'][] = array(array('commerce_razorpay' => array('amount' => $amount, 'key' => 'rzp_test_6VOiSPZ8ClqeCo', 'logo' => drupal_get_path('module', 'commerce_razorpay') .'/logo.jpg', 'order_id' => $order->order_id)), array('type' => 'setting'));
-//  $form['#attached']['js'][] = drupal_get_path('module', 'commerce_razorpay') . '/commerce_razorpay.js';
-
-// // $form['actions']['submit']['#id'] = 'edit-submit-webformname';
-//  $form['submit'] = array('#id' => 'rzp-button1', '#type' => 'button', '#value' => t('Redirect') );
-//       // $form['#action'] = url('user/register');
-//       // $form['#attached']['js'][] = drupal_get_path('module', 'commerce_payment') . '/commerce_payment.js';
-
-//       $form['help']['#markup'] = '<div class="checkout-help">' . t('Please wait while you are redirected to the payment server. If nothing happens within 10 seconds, please click on the button below.') . '</div>';
-//     }
-
-//     // print '<pre>'; print_r("outside if"); print '</pre>';
-
-//     // Merge the new form into the current form array, preserving the help text
-//     // if it exists. We also add a wrapper so the form can be easily submitted.
-//     $form += drupal_get_form($callback, $order, $payment_method);
-
-//     $form['#prefix'] = '<div class="payment-redirect-form">';
-//     $form['#suffix'] = '</div>';
-//   }
-//   else {
-//     // Alert the administrator that the module does not provide a required form.
-//     drupal_set_message(t('The %title payment method indicates it is offsite but does not define the necessary form to process the redirect.', array('%title' => $payment_method['title'])), 'error');
-//   }
-// }
-
 
 function commerce_razorpay_commerce_payment_method_redirect_form($action, array $values = array()) {
 global $user;
 $form = array();
-   // print '<pre>'; print_r("commerce_razorpay - commerce_payment_method_callback"); print '</pre>';
-    // Generate a key to use in the return URL from the redirected service if it
-    // does not already exist.
-
-    // $order = commerce_cart_order_load($user->uid);
+  
     $order = create_an_order();
-    // print '<pre>'; print_r("order"); print '</pre>';
-    // print '<pre>'; print_r($order); print '</pre>';
     $order_id = $order->id;
     $commerce_order_id = arg(1);
-    // $order_id = '';
-    // $order1 = commerce_cart_order_id($user->uid);
-    // // print '<pre>'; print_r("order"); print '</pre>';
-    // // print '<pre>'; print_r($order1); print '</pre>';exit;
-
-
-    // print '<pre>'; print_r("order"); print '</pre>';
-    // print '<pre>'; print_r($order_id); print '</pre>';exit;
     $amount = 100;
 
-    // If the payment method has the 'offsite_autoredirect' option enabled, add
-    // the redirection behavior.
-
-      // print '<pre>'; print_r("inside offsite_autoredirect"); print '</pre>';
-
-      // $amount = $order->commerce_order_total[LANGUAGE_NONE][0]['amount'];
-// drupal_add_html_head('<meta name="viewport" content="width=device-width”>');
-// $form['#attached']['js'][] = "https://checkout.razorpay.com/v1/checkout.js";
-
-// drupal_add_js(array('commerce_razorpay' => array('amount' => $amount, 'key' => 'rzp_test_6VOiSPZ8ClqeCo', 'logo' => drupal_get_path('module', 'commerce_razorpay') .'/logo.jpg', 'order_id' => $order_id)), array('type' => 'setting'));
-// $form['#attached']['js'][] = array(array('commerce_razorpay' => array('amount' => $amount, 'key' => 'rzp_test_6VOiSPZ8ClqeCo', 'logo' => drupal_get_path('module', 'commerce_razorpay') .'/logo.jpg', 'order_id' => $order->order_id)), array('type' => 'setting'));
- // $form['#attached']['js'][] = drupal_get_path('module', 'commerce_razorpay') . '/commerce_razorpay.js';
-
-// $form['actions']['submit']['#id'] = 'edit-submit-webformname';
-//  $form['submit'] = array('#id' => 'rzp-button1', '#type' => 'button', '#value' => t('Redirect') );
-      // $form['#action'] = url('user/register');
-      // $form['#attached']['js'][] = drupal_get_path('module', 'commerce_payment') . '/commerce_payment.js';
-
+    
       $form['help']['#markup'] = '<div class="checkout-help">' . t('Please wait while you are redirected to the payment server. If nothing happens within 10 seconds, please click on the button below.') . '</div>';
 
       $form['razor_payment_id'] = array(
@@ -262,43 +93,7 @@ $form = array();
          '#type' => 'hidden',
          '#value' => '',
       );
-      // $form['razor_payment_id'] = array(
-      //   'type' => 'textfield',
-      //   'value' => '',
-      //   // '#markup' => '<div id="razor-payment-id"></div>',
-      //   // '#hidden' => TRUE,
-      //   );
-
-    // print '<pre>'; print_r("outside if"); print '</pre>';
-
-    // Merge the new form into the current form array, preserving the help text
-    // if it exists. We also add a wrapper so the form can be easily submitted.
-// print '<pre>'; print_r("action"); print '</pre>';
-//     print '<pre>'; print_r($action); print '</pre>';
-  //   $form = array(
-  //   '#type' => 'form',
-  //   '#action' => $action,
-  //   '#method' => 'POST',
-  //   '#id' => '',
-  //   '#attributes' => array(),
-  // );
-    // $form['#prefix'] = '<div class="payment-redirect-form">';
-    // $form['#suffix'] = '</div>';
-// print '<pre>'; print_r("values"); print '</pre>';
-//     print '<pre>'; print_r($values); print '</pre>';
-    // $order_id = $values['build_info']['args'][0]->order_id;
-    // $amount = $values['build_info']['args'][0]->commerce_order_total[LANGUAGE_NONE][0]['amount'];
-  // foreach ($values as $key => $value) {
-    // print '<pre>'; print_r("values"); print '</pre>';
-    // print '<pre>'; print_r($value); print '</pre>';
-    // $form[$value] = array(
-    //   '#type' => 'hidden',
-    //   '#name' => $key,
-    //   '#value' => $value,
-    //   '#id' => '',
-    //   '#attributes' => array(),
-    // );
-  // }
+     
   $form['submit'] = array(
     '#type' => 'submit',
     '#id' => 'rzp-button1',
@@ -309,9 +104,6 @@ $form = array();
 
 drupal_add_js(array('commerce_razorpay' => array('amount' => $amount, 'key' => 'rzp_test_6VOiSPZ8ClqeCo', 'logo' => drupal_get_path('module', 'commerce_razorpay') .'/logo.jpg', 'order_id' => $order_id, 'commerce_order_id' => $commerce_order_id)), array('type' => 'setting'));
 $form['#attached']['js'][] = drupal_get_path('module', 'commerce_razorpay') . '/commerce_razorpay.js';
-  
-// print '<pre>'; print_r("form"); print '<pre>';
-// print '<pre>'; print_r($form); print '</pre>';
 
   return array(
     'form' => array(
@@ -319,13 +111,6 @@ $form['#attached']['js'][] = drupal_get_path('module', 'commerce_razorpay') . '/
       '#markup' => drupal_render($form),
     ),
   );
-
-
-
-
-
-
-
 
 }
 
@@ -423,9 +208,6 @@ $order = commerce_order_load($commerce_order_id);
       commerce_payment_redirect_pane_next_page($order, t('Customer successfully submitted payment at the payment gateway.'));
       drupal_goto(commerce_checkout_order_uri($order));
 
-// drupal_goto('checkout/'.$commerce_order_id.'/complete');
-// print '<pre>'; print_r("payment"); print '</pre>';
-// print '<pre>'; print_r($payment); print '</pre>'; exit;
 
 }
 
@@ -443,11 +225,6 @@ function get_payments($count = 2, $skip = 1, $from = 1400826740) {
 }
 
 function capture_payment($payment_id, $amount = '', $order_id = '') {
-
-  // print '<pre>'; print_r("inside capture payment"); print '</pre>';
-  // print '<pre>'; print_r($_REQUEST); print '</pre>';exit;
-
-  // echo json_encode(array("payment_id"=>$_POST['payment_id']));
   $fb_lib_path = function_exists('libraries_get_path') ? libraries_get_path('razorpay-php') : 'sites/all/libraries/razorpay-php';
 
   require 'libraries/razorpay-php/Razorpay.php';
@@ -461,8 +238,6 @@ $order_id = $_GET['order_id'];
 // Success URL: checkout/ORDER_ID/payment/return/ORDER_PAYMENT_REDIRECT_KEY
 
 if($payment->status == 'authorized') {
-  // drupal_goto('checkout/'. $order_id . "/payment/return/". $payment_id);
-  // drupal_goto('checkout/'. $order_id . "/checkout");
 } else {
   print '<pre>'; print_r("payment status"); print '</pre>';
   print '<pre>'; print_r($payment->status); print '</pre>'; exit;
@@ -507,10 +282,6 @@ function razorpay_payment_all_refunds($payment_id = 'pay_29QQoUBi66xm2f', $from 
  * @return [type] [description]
  */
 function create_an_order() {
-
-// $library = libraries_load('razorpay-php');
-// dpm("library");
-// dpm($library);
 $name = 'razorpay-php';
 // if (($library = libraries_load($name)) && !empty($library['loaded'])) {
 
@@ -518,49 +289,10 @@ $name = 'razorpay-php';
 
   // require '/var/www/npro/libraries/razorpay-php/Razorpay.php';
   require 'libraries/razorpay-php/Razorpay.php';
-  // require DRUPAL_ROOT ."/". $fb_lib_path.'/Razorpay.php';
-  // require(libraries_get_path('razorpay-php') . '/Razorpay.php');
-
-  // @include DRUPAL_ROOT ."/". $fb_lib_path.'/Razorpay.php';
-  //
-  //
-  // require_once DRUPAL_ROOT ."/". $fb_lib_path.'/Razorpay.php';
-  // require_once(libraries_get_path('razorpay-php') . '/src/Api.php');
-  // include('/var/www/npro/libraries/razorpay-php/src/Api.php');
-// }
-//  $fb_platform = $fb_lib_path . '/src/Api.php';
- // watchdog('commerce_razorpay fb platform', $fb_platform);
- // dpm("fb platform");
- // dpm($fb_platform);
- // include($fb_lib_path);
- // include($fb_lib_path.'/Razorpay.php');
- // include('sites/all/libraries/razorpay-php/Razorpay.php');
- // include($fb_lib_path.'/src/Api.php');
- // libraries_load($fb_lib_path);
- // require_once (libraries_get_path('razorpay-php') . '/src/Api.php');
- // include_once($fb_lib_path);
- // include_once('/Applications/MAMP/bin/php/php5.6.10/lib/php');
- // require_once DRUPAL_ROOT ."/".$fb_lib_path;
- // libraries_load('razorpay-php');
- // require($fb_lib_path.'/src/Api.php');
- // drupal_add_library('commerce_razorpay', 'razorpay-php', TRUE);
- // watchdog('commerce_razorpay - api', !class_exists('Api'));
- // watchdog('commerce_razorpay - include', !@include($fb_platform));
-
- // require DRUPAL_ROOT ."/". $fb_lib_path.'/Razorpay.php';
-// require_once DRUPAL_ROOT ."/". $fb_lib_path.'/src/Api.php';
-// $api = new Api('razorpay-php', 'sites/all/libraries');
+ 
 $api = new Api('rzp_test_6VOiSPZ8ClqeCo', 'HSFl7YizDJttZmxHi2a3123T');
 $order = $api->order->create(array('amount' => 100, "currency" => "INR", "receipt" => "test_1"));
-// print '<pre>'; print_r("order"); print '</pre>';
-//      print '<pre>'; print_r($order); print '</pre>';exit;
-// print '<pre>'; print_r("api"); print '</pre>';
-//      print '<pre>'; print_r($api); print '</pre>';exit;
 
-// $api = new Api('rzp_test_26ccbdbfe0e84b', '69b2e24411e384f91213f22a');
-     // $order = $api->order->create(array('amount' => 100, "currency", "INR", "receipt", "test_1", "payment_capture", false));
-     // print '<pre>'; print_r("order"); print '</pre>';
-     // print '<pre>'; print_r($order); print '</pre>';exit;
      return $order;
 
 
@@ -584,13 +316,8 @@ $order = $api->order->create(array('amount' => 100, "currency" => "INR", "receip
  catch (Exception $e) {}
 
 
-// drupal_add_library('razorpay-php', 'Razorpay.php');
-// drupal_add_library('razorpay-php', 'Api.php');
-// $api = new Api('rzp_test_26ccbdbfe0e84b', '69b2e24411e384f91213f22a');
 $order = $api->order->create(array('amount' => 100, "currency", "INR", "receipt", "test_1", "payment_capture", false));
 
-
-// $refund = $payment->create();
 
 return $order;
 }
@@ -622,309 +349,10 @@ function commerce_razorpay_commerce_checkout_pane_info() {
 
 function commerce_razorpay_form_alter($form, &$form_state, $form_id) {
   global $user;
-  // print '<pre>'; print_r("form_id"); print '</pre>';
-  // print '<pre>'; print_r($form_id); print '</pre>';
+ 
   if($form_id == 'commerce_checkout_form_checkout') {
   }
   if($form_id == 'commerce_checkout_form_review') {
-    // dpm("form");
-    // dpm($form);
-    // dpm("form state");
-    // dpm($form_state['commerce_payment']);
-    // $order = commerce_cart_order_load($user->uid);
-    // $amount = $order->commerce_order_total[LANGUAGE_NONE][0]['amount'];
-    // // dpm("order");
-    // // dpm($order);
-    // drupal_add_html_head('<meta name="viewport" content="width=device-width”>');
-    // $form['#attached']['js'][] = "https://checkout.razorpay.com/v1/checkout.js";
-
-    // drupal_add_js(array('commerce_razorpay' => array('amount' => $amount, 'key' => 'rzp_test_6VOiSPZ8ClqeCo', 'logo' => drupal_get_path('module', 'commerce_razorpay') .'/logo.jpg', 'order_id' => $order->order_id)), array('type' => 'setting'));
-
-    // $form['#attached']['js'][] = drupal_get_path('module', 'commerce_razorpay')."/commerce_razorpay.js";
-
+  
   }
 }
-/**
- * Implements hook_redirect_form().
- */
-// function commerce_razorpay_redirect_form($form, &$form_state, $order, $payment_method) {
-//   dpm("form id");
-//   dpm($form);
-
-//     print '<pre>'; print_r("form"); print '</pre>';
-//   print '<pre>'; print_r($form); print '</pre>';
-
-// //   print '<pre>'; print_r("request"); print '</pre>';
-// //   print '<pre>'; print_r($_REQUEST); print '</pre>';
-// print '<pre>'; print_r("payment method"); print '</pre>';
-//   print '<pre>'; print_r($payment_method); print '</pre>';
-// //   exit;
-//   // $order = create_an_order();
-
-// // print '<pre>'; print_r("order"); print '</pre>';
-// // print '<pre>'; print_r($order); print '</pre>';exit;
-// $amount = $order->commerce_order_total[LANGUAGE_NONE][0]['amount'];
-// // drupal_add_html_head('<meta name="viewport" content="width=device-width”>');
-// // $form['#attached']['js'][] = "https://checkout.razorpay.com/v1/checkout.js";
-
-// // drupal_add_js(array('commerce_razorpay' => array('amount' => $amount, 'key' => 'rzp_test_6VOiSPZ8ClqeCo', 'logo' => drupal_get_path('module', 'commerce_razorpay') .'/logo.jpg', 'order_id' => $order->order_id)), array('type' => 'setting'));
-
-// // $form['#attached']['js'][] = drupal_get_path('module', 'commerce_razorpay')."/commerce_razorpay.js";
-
-//   // dpm("hook redirect called");
-//   // dpm("order");
-//   // dpm($order);
-//   // dpm("payment method");
-//   // dpm($payment_method);
-//   $wrapper = entity_metadata_wrapper('commerce_order', $order);
-//   $billing_address = $wrapper->commerce_customer_billing->commerce_customer_address->value();
-
-//   // Set all data in array.
-//   $data = array(
-//     'key' => $payment_method['settings']['key_id'],
-//     'amount' => $wrapper->commerce_order_total->amount->value() / 100,
-//     'productinfo' => 'Product order ID:' . $order->order_id,
-//     'name' => $billing_address['name_line'],
-//     'email' => $order->mail,
-//     // 'phone' => $billing_address['pm_phone'],
-//     // 'furl' => url('checkout/' . $order->order_id . '/payment/back/' . $order->data['payment_redirect_key'], array('absolute' => TRUE)),
-//     // 'surl' => url('checkout/' . $order->order_id . '/payment/return/' . $order->data['payment_redirect_key'], array('absolute' => TRUE)),
-//   );
-//   // Peform phone verification if its all digits otherwise go back.
-//   // if (!preg_match('/^\d{10}$/', $data['phone'])) {
-//   //   drupal_set_message(t('Phone number should be 10 digit number.'), 'error');
-//   //   commerce_payment_redirect_pane_previous_page($order);
-//   //   return '';
-//   // }
-//   // Check if all data are available else generate hash.
-//   if (!isset($data['key'])) {
-//     drupal_set_message(t('Required Information are not available. Please Try again...'), 'error');
-//     commerce_payment_redirect_pane_previous_page($order);
-//     return '';
-//   }
-//   // else {
-
-//   // // Redirect URI.
-//   // if (($payment_method['settings']['url']) == 1) {
-//   //   $url = url('https://secure.payu.in/_payment');
-//   // }
-//   // else {
-//   //   $url = url('https://test.payu.in/_payment');
-//   // }
-
-//  // capture_payment($payment_id, $amount = 100, $order_id = 1);
-//   // if (isset($hash)) {
-//   //   $form['#action'] = $url;
-//   // }
-//   // else {
-//   //   drupal_set_message(t('Critical Information not generated. Please Try again.'), 'error');
-//   //   commerce_payment_redirect_pane_previous_page($order);
-//   //   return '';
-//   // }
-//   return $form;
-// }
-
-// /**
-//  * Implements hook_redirect_form_validate().
-//  */
-// function commerce_razorpay_redirect_form_validate($order, $payment_method) {
-//   watchdog('inside redirect form validate', 'message');
-//   print '<pre>'; print_r("request"); print '</pre>';
-//   print '<pre>'; print_r($_REQUEST); print '</pre>';
-// print '<pre>'; print_r("request"); print '</pre>';
-//   print '<pre>'; print_r($payment_method); print '</pre>';
-//   exit;
-//   $message = t('Security error ip Address was: @ip', array('@ip' => ip_address()));
-//   $payload['status'] = $_REQUEST["status"];
-//   $payload['firstname'] = $_REQUEST["firstname"];
-//   $payload['amount'] = $_REQUEST["amount"];
-//   $payload['txnid'] = $_REQUEST["txnid"];
-//   $payload['hash'] = $_REQUEST["hash"];
-//   $payload['key'] = $_REQUEST["key"];
-//   $payload['productinfo'] = $_REQUEST["productinfo"];
-//   $payload['email'] = $_REQUEST["email"];
-//   $payload['salt'] = $payment_method['settings']['salt'];
-
-
-//     // Here you need to put in the routines for a successful.
-//     // Transaction such as sending an email to customer.
-//     // Setting database status, informing logistics etc etc.
-//     commerce_razorpay_transaction($order, $payment_method, $payload['status'], $payload['txnid'], $payload);
-//     return drupal_set_message(t('Thank you for shopping with us. Your account has been charged and your transaction is successful.'));
-
-// }
-
-
-/**
- * Payment method callback: submit form.
- */
-// function commerce_razorpay_submit_form($payment_method, $pane_values, $checkout_pane, $order) {
-//   module_load_include('inc', 'commerce_payment', 'includes/commerce_payment.credit_card');
-
-//   // Default to a known test credit card number. For valid numbers of other card
-//   // types see: http://www.rimmkaufman.com/blog/credit-card-test-numbers/09112007/
-//   // return commerce_payment_credit_card_form(array(), array('number' => '4111111111111111'));
-// }
-
-
-
-// function commerce_razorpay_submit_form_submit($payment_method, $pane_form, $pane_values, $order, $charge) {
-//   // print '<pre>'; print_r("commerce razorpay submit form submit"); print '</pre>'; exit;
-// // print '<pre>'; print_r("commerce razorpay submit form submit"); print '</pre>';
-
-//   // $order = commerce_cart_order_load($user->uid);
-//     // $amount = $order->commerce_order_total[LANGUAGE_NONE][0]['amount'];
-//     // // dpm("order");
-//     // // dpm($order);
-//     // drupal_add_html_head('<meta name="viewport" content="width=device-width”>');
-//     // $form['#attached']['js'][] = "https://checkout.razorpay.com/v1/checkout.js";
-
-//     // drupal_add_js(array('commerce_razorpay' => array('amount' => $amount, 'key' => 'rzp_test_6VOiSPZ8ClqeCo', 'logo' => drupal_get_path('module', 'commerce_razorpay') .'/logo.jpg', 'order_id' => $order->order_id)), array('type' => 'setting'));
-
-//     // $form['#attached']['js'][] = drupal_get_path('module', 'commerce_razorpay')."/commerce_razorpay.js";
-
-// }
-
-
-
-/**
- * Payment redirect pane: form callback.
- */
-// function commerce_razorpay_redirect_pane_checkout_form(&$form, &$form_state, $checkout_pane, $order) {
-
- // print '<pre>'; print_r("inside comerce razor pay redirect page checkout"); print '</pre>'; exit;
- //  // First load the order's specified payment method instance.
- //  if (!empty($order->data['payment_method'])) {
- //    $payment_method = commerce_payment_method_instance_load($order->data['payment_method']);
- //  }
- //  else {
- //    $payment_method = FALSE;
- //  }
-
- //  // If the payment method doesn't exist or does not require a redirect...
- //  if (!$payment_method || !$payment_method['offsite']) {
- //    if (!$payment_method) {
- //      $log = t('Customer skipped the Payment page because no payment was required.');
- //    }
- //    else {
- //      $log = t('Customer skipped the Payment page because payment was already submitted.');
- //    }
-
- //    // Advance the customer to the next step of the checkout process.
- //    commerce_payment_redirect_pane_next_page($order, $log);
- //    drupal_goto(commerce_checkout_order_uri($order));
- //  }
-
- //  // If the user came to the cancel URL...
- //  if (arg(3) == 'back' && arg(4) == $order->data['payment_redirect_key']) {
- //    // Perform any payment cancellation functions if necessary.
- //    if ($callback = commerce_payment_method_callback($payment_method, 'redirect_form_back')) {
- //      $callback($order, $payment_method);
- //    }
-
- //    // Send the customer to the previous step of the checkout process.
- //    commerce_payment_redirect_pane_previous_page($order, t('Customer canceled payment at the payment gateway.'));
- //    drupal_goto(commerce_checkout_order_uri($order));
- //  }
-
- //  // If the user came to the return URL...
- //  if (arg(3) == 'return' && arg(4) == $order->data['payment_redirect_key']) {
- //    // Check for a validate handler on return.
- //    $validate_callback = commerce_payment_method_callback($payment_method, 'redirect_form_validate');
-
- //    // If there is no validate handler or if there is and it isn't FALSE...
- //    if (!$validate_callback || $validate_callback($order, $payment_method) !== FALSE) {
- //      // Perform any submit functions if necessary.
- //      if ($callback = commerce_payment_method_callback($payment_method, 'redirect_form_submit')) {
- //        $callback($order, $payment_method);
- //      }
-
- //      // Send the customer on to the next checkout page.
- //      commerce_payment_redirect_pane_next_page($order, t('Customer successfully submitted payment at the payment gateway.'));
- //      drupal_goto(commerce_checkout_order_uri($order));
- //    }
- //    else {
- //      // Otherwise display the failure message and send the customer back.
- //      drupal_set_message(t('Payment failed at the payment server. Please review your information and try again.'), 'error');
-
- //      commerce_payment_redirect_pane_previous_page($order, t('Customer payment submission failed at the payment gateway.'));
- //      drupal_goto(commerce_checkout_order_uri($order));
- //    }
- //  }
-
- //  // If the function to build the redirect form exists...
- //  if ($callback = commerce_payment_method_callback($payment_method, 'redirect_form')) {
- //    // Generate a key to use in the return URL from the redirected service if it
- //    // does not already exist.
- //    if (empty($order->data['payment_redirect_key'])) {
- //      $order->data['payment_redirect_key'] = drupal_hash_base64(time());
- //      commerce_order_save($order);
- //    }
-
- //    // If the payment method has the 'offsite_autoredirect' option enabled, add
- //    // the redirection behavior.
- //    if (!empty($payment_method['offsite_autoredirect'])) {
-
- //      $amount = $order->commerce_order_total[LANGUAGE_NONE][0]['amount'];
- //    // dpm("order");
- //    // dpm($order);
- //    drupal_add_html_head('<meta name="viewport" content="width=device-width”>');
- //    $form['#attached']['js'][] = "https://checkout.razorpay.com/v1/checkout.js";
-
- //    drupal_add_js(array('commerce_razorpay' => array('amount' => $amount, 'key' => 'rzp_test_6VOiSPZ8ClqeCo', 'logo' => drupal_get_path('module', 'commerce_razorpay') .'/logo.jpg', 'order_id' => $order->order_id)), array('type' => 'setting'));
- //      $form['#attached']['js'][] = drupal_get_path('module', 'commerce_razorpay') . '/commerce_razorpay.js';
- //      $form['help']['#markup'] = '<div class="checkout-help">' . t('Please wait while you are redirected to the payment server. If nothing happens within 10 seconds, please click on the button below.') . '</div>';
- //    }
-
- //    // Merge the new form into the current form array, preserving the help text
- //    // if it exists. We also add a wrapper so the form can be easily submitted.
- //    $form += drupal_get_form($callback, $order, $payment_method);
-
- //    $form['#prefix'] = '<div class="payment-razor-form">';
- //    $form['#suffix'] = '</div>';
- //  }
- //  else {
- //    // Alert the administrator that the module does not provide a required form.
- //    drupal_set_message(t('The %title payment method indicates it is offsite but does not define the necessary form to process the redirect.', array('%title' => $payment_method['title'])), 'error');
- //  }
-// }
-
-/**
- * PayUMoney finish transaction.
- */
-// function commerce_razorpay_transaction($order, $payment_method, $status, $txnid, $payload) {
-//   // $wrapper = entity_metadata_wrapper('commerce_order', $order);
-//   // $currency = $wrapper->commerce_order_total->currency_code->value();
-//   // $amount = $wrapper->commerce_order_total->amount->value();
-
-//   // $transaction = commerce_payment_transaction_new('commerce_razorpay', $order->order_id);
-//   // $transaction->instance_id = $payment_method['instance_id'];
-//   // $transaction->amount = $amount;
-//   // $transaction->currency_code = $currency;
-//   // $transaction->remote_id = $txnid;
-//   // $transaction->payload = $payload;
-//   // $instance = explode('|', $payment_method['instance_id']);
-//   // $transaction->payment_method = $instance[0];
-//   // $transaction->message = '';
-//   // $transaction->message_variables = '';
-
-//   // // Succeessful.
-//   // if ($status == "success") {
-//   //   $transaction->remote_status = t('Success');
-//   //   $transaction->message = t('Your transation ID is :') . $txnid . t('. Payment received at') . ' ' . date("d-m-Y H:i:s", REQUEST_TIME);
-//   //   $transaction->status = COMMERCE_PAYMENT_STATUS_SUCCESS;
-//   // }
-//   // elseif ($status == "pending") {
-//   //   // Batch process - Pending orders.
-//   //   $transaction->remote_status = t('Pending');
-//   //   $transaction->message = t('Your transation ID is :') . $txnid . t('. Payment pending at') . ' ' . date("d-m-Y H:i:s", REQUEST_TIME);
-//   //   $transaction->status = COMMERCE_PAYMENT_STATUS_PENDING;
-//   // }
-//   // elseif ($status == "failure") {
-//   //   // Failed transaction.
-//   //   $transaction->remote_status = t('Failure');
-//   //   $transaction->message = t('Your transation ID is :') . $txnid . t('. Payment failed at') . ' ' . date("d-m-Y H:i:s", REQUEST_TIME);
-//   //   $transaction->status = COMMERCE_PAYMENT_STATUS_FAILURE;
-//   // }
-//   // commerce_payment_transaction_save($transaction);
-// }
