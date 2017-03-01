@@ -70,20 +70,25 @@ function commerce_razorpay_commerce_payment_method_info() {
     'terminal' => TRUE,
     'offsite' => TRUE,
     'offsite_autoredirect' => FALSE,
-    'callbacks' => array('redirect_form' => 'commerce_razorpay_commerce_payment_method_redirect_form'),
+    // 'callbacks' => array('redirect_form' => 'commerce_razorpay_commerce_payment_method_redirect_form'),
   );
   return $payment_methods;
 }
 
 
-function commerce_razorpay_commerce_payment_method_redirect_form($action, array $values = array()) {
-global $user;
+/**
+ * Implements CALLBACK_commerce_payment_method_redirect_form().
+ */
+function commerce_razorpay_redirect_form($form, &$form_state, $order, $payment_method) {
 $form = array();
-  
-    $order = create_an_order();
+    
+    $commerce_order_id = $order->order_id;
+    $amount = $order->commerce_order_total[LANGUAGE_NONE][0]['amount'];
+    $key = $payment_method['settings']['key_id'];
+    $order = create_an_order($amount);
     $order_id = $order->id;
-    $commerce_order_id = arg(1);
-    $amount = 100;
+    // $commerce_order_id = arg(1);
+    // $amount = 100;
 
     
       $form['help']['#markup'] = '<div class="checkout-help">' . t('Please wait while you are redirected to the payment server. If nothing happens within 10 seconds, please click on the button below.') . '</div>';
@@ -102,7 +107,7 @@ $form = array();
   $form['#attached']['js'][] = "https://checkout.razorpay.com/v1/checkout.js";
 
 
-drupal_add_js(array('commerce_razorpay' => array('amount' => $amount, 'key' => 'rzp_test_6VOiSPZ8ClqeCo', 'logo' => drupal_get_path('module', 'commerce_razorpay') .'/logo.jpg', 'order_id' => $order_id, 'commerce_order_id' => $commerce_order_id)), array('type' => 'setting'));
+drupal_add_js(array('commerce_razorpay' => array('amount' => $amount, 'key' => $key, 'logo' => drupal_get_path('module', 'commerce_razorpay') .'/logo.jpg', 'order_id' => $order_id, 'commerce_order_id' => $commerce_order_id)), array('type' => 'setting'));
 $form['#attached']['js'][] = drupal_get_path('module', 'commerce_razorpay') . '/commerce_razorpay.js';
 
   return array(
@@ -281,7 +286,7 @@ function razorpay_payment_all_refunds($payment_id = 'pay_29QQoUBi66xm2f', $from 
  * Create an order.
  * @return [type] [description]
  */
-function create_an_order() {
+function create_an_order($amount) {
 $name = 'razorpay-php';
 // if (($library = libraries_load($name)) && !empty($library['loaded'])) {
 
@@ -291,7 +296,7 @@ $name = 'razorpay-php';
   require 'libraries/razorpay-php/Razorpay.php';
  
 $api = new Api('rzp_test_6VOiSPZ8ClqeCo', 'HSFl7YizDJttZmxHi2a3123T');
-$order = $api->order->create(array('amount' => 100, "currency" => "INR", "receipt" => "test_1"));
+$order = $api->order->create(array('amount' => $amount, "currency" => "INR", "receipt" => "test_1"));
 
      return $order;
 
