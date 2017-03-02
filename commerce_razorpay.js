@@ -10,6 +10,7 @@
       var order_id = settings.commerce_razorpay.order_id;
       var commerce_order_id = settings.commerce_razorpay.commerce_order_id;
       var payment_id = '';
+      var payment_settings = JSON.stringify(settings.commerce_razorpay.payment_settings);
     
 
       var options = {
@@ -21,10 +22,12 @@
         "image": logo,
         "order_id": order_id,
         "handler": function(response) {
-
+          // alert("payment_settings");
+          // console.log(payment_settings);
+          
           var payment_id = response.razorpay_payment_id;
 
-          window.location = '/capture-payment?payment_id=' + payment_id + '&amount=' +amount + '&order_id=' + commerce_order_id;
+          window.location = '/capture-payment?payment_id=' + payment_id + '&amount=' +amount + '&order_id=' + commerce_order_id + '&payment_settings=' + payment_settings;
           $('razor-payment-id').val(response.razorpay_payment_id);
 
 
