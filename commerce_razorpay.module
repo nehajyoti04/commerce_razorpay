@@ -51,6 +51,19 @@ $items['capture-payment'] = array(
     'page callback' => 'commerce_razorpay_capture_payment',
     'access arguments' => array('administer site configuration'),
   );
+
+// Add a menu item for refunding authorizations.
+  $items['admin/commerce/orders/%commerce_order/payment/%commerce_payment_transaction/razorpay-refund'] = array(
+    'title' => 'Refund',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('commerce_razorpay_refund_form', 3, 5),
+    'access callback' => 'commerce_razorpay_refund_access',
+    'access arguments' => array(3, 5),
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'context' => MENU_CONTEXT_INLINE,
+    'weight' => 2,
+    'file' => 'includes/commerce_razorpay.admin.inc',
+  );
 return $items;
 }
 
@@ -86,7 +99,7 @@ function razorpay_order($amount) {
 
   // require '/var/www/npro/libraries/razorpay-php/Razorpay.php';
   require 'libraries/razorpay-php/Razorpay.php';
- 
+
 $api = new Api('rzp_test_6VOiSPZ8ClqeCo', 'HSFl7YizDJttZmxHi2a3123T');
 $order = $api->order->create(array('amount' => $amount, "currency" => "INR", "receipt" => "test_1"));
 
@@ -133,7 +146,7 @@ function commerce_razorpay_redirect_form($form, &$form_state, $order, $payment_m
     // $commerce_order_id = arg(1);
     // $amount = 100;
 
-    
+
       $form['help']['#markup'] = '<div class="checkout-help">' . t('Please wait while you are redirected to the payment server. If nothing happens within 10 seconds, please click on the button below.') . '</div>';
 
       $form['razor_payment_id'] = array(
@@ -141,7 +154,7 @@ function commerce_razorpay_redirect_form($form, &$form_state, $order, $payment_m
          '#type' => 'hidden',
          '#value' => '',
       );
-     
+
   $form['submit'] = array(
     '#type' => 'submit',
     '#id' => 'rzp-button1',
@@ -162,10 +175,31 @@ $form['#attached']['js'][] = drupal_get_path('module', 'commerce_razorpay') . '/
 
 }
 
+
+/**
+ * Implements hook_redirect_form_validate().
+ */
+function commerce_razorpay_redirect_form_validate($order, $payment_method) {
+  $message = t('Security error ip Address was: @ip', array('@ip' => ip_address()));
+  print '<pre>'; print_r("request"); print '</pre>';
+  print '<pre>'; print_r($_REQUEST); print '</pre>';exit;
+
+
+
+    // Here you need to put in the routines for a successful.
+    // Transaction such as sending an email to customer.
+    // Setting database status, informing logistics etc etc.
+    commerce_razorpay_transaction($order, $payment_method);
+    return drupal_set_message(t('Thank you for shopping with us. Your account has been charged and your transaction is successful.'));
+
+}
+
 /**
  * Payment method callback: submit form submission.
  */
 function commerce_razorpay_submit_form_submit($payment_method, $pane_form, $pane_values, $order, $charge) {
+  // Trying to get razorpay payement id.
+
   // Just as an example, we might store information in the order object from the
   // payment parameters, though we would never save a full credit card number,
   // even in examples!
@@ -176,6 +210,12 @@ function commerce_razorpay_submit_form_submit($payment_method, $pane_form, $pane
 
   // Every attempted transaction should result in a new transaction entity being
   // created for the order to log either the success or the failure.
+  // print '<pre>'; print_r("order"); print '</pre>';
+  // print '<pre>'; print_r($order); print '</pre>';
+
+  // print '<pre>'; print_r("request submit"); print '</pre>';
+  // print '<pre>'; print_r($_REQUEST); print '</pre>';exit;
+
   commerce_razorpay_transaction($payment_method, $order, $charge);
 }
 
@@ -189,10 +229,19 @@ function commerce_razorpay_submit_form_submit($payment_method, $pane_form, $pane
  * @param $charge
  *   An array indicating the amount and currency code to charge.
  */
-function commerce_razorpay_transaction($payment_method, $order, $charge) {
+function commerce_razorpay_transaction($payment_method, $order, $charge='') {
+  // print '<pre>'; print_r("payment method"); print '</pre>';
+  // print '<pre>'; print_r($payment_method); print '</pre>';
+  // print '<pre>'; print_r("order"); print '</pre>';
+  // print '<pre>'; print_r($order); print '</pre>';
+  // exit;
+  // Need to store razorpay payment id in transaction .. this all is hit and trial.
+
   // $card_details = $order->data['commerce_payment_example']['credit_card'];
 
   $transaction = commerce_payment_transaction_new('commerce_payment_example', $order->order_id);
+  // print '<pre>'; print_r("transaction"); print '</pre>';
+  // print '<pre>'; print_r($transaction); print '</pre>';exit;
   $transaction->instance_id = $payment_method['instance_id'];
   $transaction->amount = $charge['amount'];
   $transaction->currency_code = $charge['currency_code'];
@@ -256,6 +305,12 @@ $payment = capture_payment($payment_id, $amount, $order_id, $payment_settings);
 
 
 $order = commerce_order_load($commerce_order_id);
+// print '<pre>'; print_r("order here"); print '</pre>';
+// print '<pre>'; print_r($order); print '</pre>';exit;
+$order->data['razorpay_payment_id'] = $payment_id;
+commerce_order_save($order);
+// print '<pre>'; print_r("order here"); print '</pre>';
+// print '<pre>'; print_r($order); print '</pre>';exit;
 // Send the customer on to the next checkout page.
       commerce_payment_redirect_pane_next_page($order, t('Customer successfully submitted payment at the payment gateway.'));
       drupal_goto(commerce_checkout_order_uri($order));
@@ -342,7 +397,7 @@ function razorpay_payment_all_refunds($payment_id = 'pay_29QQoUBi66xm2f', $from 
 
 //   // require '/var/www/npro/libraries/razorpay-php/Razorpay.php';
 //   require 'libraries/razorpay-php/Razorpay.php';
- 
+
 // $api = new Api('rzp_test_6VOiSPZ8ClqeCo', 'HSFl7YizDJttZmxHi2a3123T');
 // $order = $api->order->create(array('amount' => $amount, "currency" => "INR", "receipt" => "test_1"));
 
@@ -402,10 +457,254 @@ function commerce_razorpay_commerce_checkout_pane_info() {
 
 function commerce_razorpay_form_alter($form, &$form_state, $form_id) {
   global $user;
- 
+
   if($form_id == 'commerce_checkout_form_checkout') {
   }
   if($form_id == 'commerce_checkout_form_review') {
-  
+
   }
+}
+
+
+/**
+ * Process a Void or Force transaction.
+ *
+ * @param $transaction
+ *  The Transaction entity.
+ * @param $payment_method
+ *   The payment method instance array associated with this API request.
+ * @param $amount
+ *   Current transaction amount.
+ * @param $action
+ *   Transaction type, 'Void' or 'Force' supported.
+ * @return bool
+ *  Return TRUE on success.
+ * @see TransactServices.svc/ProcessCreditCard (Transaction API Guide)
+ */
+function commerce_razorpay_transaction_request($transaction, $payment_method, $amount, $action) {
+  // Action can be Void, Capture.
+  // Build the base profile request data.
+  $api_request_data = array(
+    'TransType' => $action,
+     // The PNRef number of the original sale transaction.
+    'PNRef' => $transaction->remote_id,
+    'Amount' => $amount,
+    'ExtData' => '<AuthCode>' . $transaction->data['auth_code']['0'] . '</AuthCode>',
+    'CardNum' => '',
+    'NameOnCard' => '',
+    'ExpDate' => '',
+    'Street' => '',
+    'Zip' => '',
+    'MagData' => '',
+    'InvNum' => '',
+    'CVNum' => '',
+  );
+  $payment_method['settings']['txn_payleap_type'] = $action == 'Void' ? PAYLEAP_TXN_TYPE_VOID : PAYLEAP_TXN_TYPE_FORCE;
+  $response = commerce_payleap_request($payment_method, $api_request_data);
+
+  $result = TRUE;
+  $transaction->payload[REQUEST_TIME] = isset($response['xml']) ? $response['xml']->asXML() : '';
+
+  // If we didn't get an approval response code...
+   if (!$response['status']) {
+    // Display an error message but leave the transaction pending.
+    drupal_set_message(t('PayLeap request failed'), 'error');
+    drupal_set_message(check_plain($response['msg']), 'error');
+    $result =  FALSE;
+   }
+   else {
+     drupal_set_message(t('@action request successfully.', array('@action' => $action)));
+     // Update to new remote ID.
+     $transaction->remote_id = isset($response['xml']->PNRef) ? (string) $response['xml']->PNRef : '';
+     // Update the transaction amount to the actual capture amount.
+     $transaction->data['auth_code'][] = isset($response['xml']) && isset($response['xml']->AuthCode) ? (string) $response['xml']->AuthCode : '';
+
+     if ($response['status']) {
+       // Set the remote and local status accordingly.
+       switch ($action) {
+         case 'Void':
+           $transaction->status = PAYLEAP_PAYMENT_STATUS_CANCELED;
+           break;
+         case 'Force':
+           $transaction->status = COMMERCE_PAYMENT_STATUS_SUCCESS;
+           break;
+       }
+       $transaction->amount = commerce_currency_decimal_to_amount($amount, $transaction->currency_code);
+     }
+     $transaction->remote_status = $response['status'];
+     $transaction->payload[REQUEST_TIME] = isset($response['xml']) ? $response['xml']->asXML() : '';
+
+     // Append a capture indication to the result message.
+     $transaction->message .= implode('<br />', commerce_payleap_get_log_message($response, $payment_method['settings']['txn_payleap_type']));
+   }
+   commerce_payment_transaction_save($transaction);
+   return $result;
+}
+
+
+/**
+ * Determines access to the prior authorization capture form for Amex
+ *   hosted credit card transactions.
+ *
+ * @param $order
+ *   The order the transaction is on.
+ * @param $transaction
+ *   The payment transaction object to be captured.
+ *
+ * @return
+ *   TRUE or FALSE indicating capture access.
+ */
+function commerce_razorpay_refund_access($order, $transaction) {
+  return TRUE;
+}
+
+
+/**
+ * Refund a transaction
+ * @param object $capture_transaction
+ *   Transaction to be refunded
+ * @param decimal $amount
+ *   Ammount to be refunded as a decimal
+ * @return boolean
+ */
+function commerce_razorpay_refund_transaction($capture_transaction, $amount) {
+  $return = FALSE;
+  $instance_id = $capture_transaction->instance_id;
+  $payment_method = commerce_payment_method_instance_load($instance_id);
+
+  $auth_transaction_id = $capture_transaction->data->order->reference;
+
+  $transaction = commerce_payment_transaction_new('commerce_razorpay', $capture_transaction->order_id);
+  $transaction->amount = - commerce_currency_decimal_to_amount($amount, $capture_transaction->currency_code);
+  $transaction->currency_code = $capture_transaction->currency_code;
+  $transaction->status = COMMERCE_PAYMENT_STATUS_PENDING;
+  $transaction->instance_id = $payment_method['instance_id'];
+  $transaction->remote_id = $capture_transaction->remote_id;
+
+  commerce_payment_transaction_save($transaction);
+
+  $data = new stdClass();
+
+  $data->apiOperation = 'REFUND';
+
+  $data->order['reference'] = $auth_transaction_id;
+
+  $data->transaction['amount'] = $amount;
+  $data->transaction['currency'] = $transaction->currency_code;
+  $data->transaction['reference'] = $transaction->transaction_id;
+
+  $data->sourceOfFunds['session'] = $transaction->remote_id;
+  $data->sourceOfFunds['type'] = 'CARD';
+
+  $url = $payment_method['settings']['txn_url'] . AMEX_TXN_PATH . $payment_method['settings']['merchant_id'] . '/order/' . (10000000000 + $auth_transaction_id) . '/transaction/' . $transaction->transaction_id;
+  $result = _commerce_razorpay_put_request($url, $payment_method['settings']['password'], $data);
+  $transaction->payload = $result;
+
+  switch ($result->result) {
+    case 'SUCCESS':
+      $transaction->status = COMMERCE_PAYMENT_STATUS_SUCCESS;
+      $transaction->remote_status = $result->response->gatewayCode;
+      $transaction->message = 'Refunded';
+      drupal_set_message(t('Transaction was processed succesfully'));
+      $return = TRUE;
+      break;
+    case 'PENDING':
+      $transaction->status = COMMERCE_PAYMENT_STATUS_PENDING;
+      $transaction->remote_status = $result->response->gatewayCode;
+      $transaction->message = $result->response->acquirerMessage;
+      drupal_set_message(t('Transaction pending'));
+      $return = TRUE;
+      break;
+    case 'FAILURE':
+      $transaction->status = COMMERCE_PAYMENT_STATUS_FAILURE;
+      $transaction->remote_status = $result->response->gatewayCode;
+      $transaction->message = $result->response->acquirerMessage;
+      break;
+    case 'UNKNOWN':
+      drupal_set_message(t('There was a problem processing your transaction. Your credit/debit card was not charged. Please try again later.'), 'error');
+      break;
+    case 'ERROR':
+      $transaction = _commerce_razorpay_error_process($result, $transaction);
+      break;
+  }
+
+  commerce_payment_transaction_save($transaction);
+  return $return;
+}
+
+function _commerce_razorpay_error_process($result, $transaction) {
+  if (isset($result->error)) {
+    $transaction->remote_status = $result->error->cause;
+    switch ($transaction->remote_status) {
+      case 'INVALID_REQUEST':
+      case 'SERVER_BUSY':
+        $transaction->message = $result->error->explanation;
+        break;
+      case 'REQUEST_REJECTED':
+        $transaction->message = 'Request rejected: Code ' . $result->error->supportCode;
+        break;
+      case 'SERVER_FAILED':
+        $transaction->message = 'Remote server error.';
+        break;
+    }
+    commerce_payment_transaction_save($transaction);
+  }
+  return $transaction;
+}
+
+
+/**
+ * A wrapper for curl to be reused for Amex requests.
+ *
+ * @param string $url
+ * @param string $password
+ * @param array $data
+ * @return multitype:string
+ */
+function _commerce_razorpay_put_request($url, $merchant_id, $password, $data = array()) {
+  // Set a one-minute timeout for this script
+  set_time_limit(60);
+
+  // Initialise output variable
+  $output = array();
+
+  // Encode the data array.
+  $data_string = json_encode($data);
+
+  // Open the cURL session
+  $curlSession = curl_init();
+
+  // Set the URL
+  curl_setopt($curlSession, CURLOPT_URL, $url);
+  // No headers, please
+  curl_setopt($curlSession, CURLOPT_HEADER, 0);
+  // It's a PUT request
+  curl_setopt($curlSession, CURLOPT_CUSTOMREQUEST, "PUT");
+  // Set the fields for the POST
+  curl_setopt($curlSession, CURLOPT_POSTFIELDS, $data_string);
+  curl_setopt($curlSession, CURLOPT_HTTPHEADER, array(
+  'Content-Type: application/json',
+  'Content-Length: ' . strlen($data_string))
+  );
+  // Return it direct, don't print it out
+  curl_setopt($curlSession, CURLOPT_RETURNTRANSFER, 1);
+  // This connection will timeout in 30 seconds
+  curl_setopt($curlSession, CURLOPT_TIMEOUT, 30);
+  //The next two lines must be present for the kit to work with newer version of cURL
+  //You should remove them if you have any problems in earlier versions of cURL
+  curl_setopt($curlSession, CURLOPT_SSL_VERIFYPEER, FALSE);
+  curl_setopt($curlSession, CURLOPT_SSL_VERIFYHOST, 1);
+
+  curl_setopt($curlSession, CURLOPT_HTTPAUTH, CURLAUTH_BASIC ) ;
+  curl_setopt($curlSession, CURLOPT_USERPWD, ":" . $password);
+
+  //Send the request and store the result in an array
+  $rawresponse = curl_exec($curlSession);
+  $response = json_decode($rawresponse);
+
+  // Close the cURL session
+  curl_close($curlSession);
+
+  // Return the output
+  return $response;
 }
