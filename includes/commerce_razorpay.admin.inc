@@ -97,7 +97,7 @@ function commerce_razorpay_api_request($payment_method, $data = array()) {
 
 }
 
-function commerce_razorpay_request_refund($order, $transaction, $payment_method) {
+function commerce_razorpay_request_refund($order, $transaction, $payment_method, $amount='') {
 require 'libraries/razorpay-php/Razorpay.php';
   // use Razorpay\Api\Api;
 $key_id = $payment_method['settings']['key_id'];
@@ -105,24 +105,16 @@ $key_secret = $payment_method['settings']['key_secret'];
 $api = new Api($key_id, $key_secret);
 $razorpay_payment_id = $order->data['razorpay_payment_id'];
 
-// print '<pre>'; print_r("api"); print '</pre>';
-// print '<pre>'; print_r($api); print '</pre>';
-// print '<pre>'; print_r("order"); print '</pre>';
-// print '<pre>'; print_r($order); print '</pre>';
-// print '<pre>'; print_r("transaction"); print '</pre>';
-// print '<pre>'; print_r($transaction); print '</pre>';exit;
-
-// $api = new Api('rzp_test_26ccbdbfe0e84b', '69b2e24411e384f91213f22a');
 
 $payment = $api->payment->fetch($razorpay_payment_id);
-$refund = $payment->refund();
-
-print '<pre>'; print_r("refund"); print '</pre>';
-print '<pre>'; print_r($refund); print '</pre>';exit;
+if($amount == '') {
+  $refund = $payment->refund();
+} else {
+  $refund = $payment->refund(array('amount' => $amount)); // for partial refund
+}
 
 return $refund;
 
 
-//$refund = $payment->refund(array('amount' => 100)); for partial refund
 
 }

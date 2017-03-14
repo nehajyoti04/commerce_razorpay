@@ -11,7 +11,7 @@
       var commerce_order_id = settings.commerce_razorpay.commerce_order_id;
       var payment_id = '';
       var payment_settings = JSON.stringify(settings.commerce_razorpay.payment_settings);
-    
+
 
       var options = {
         // "key": "rzp_test_ipkgumBJtJrvd1",
@@ -24,10 +24,11 @@
         "handler": function(response) {
           // alert("payment_settings");
           // console.log(payment_settings);
-          
+
+
           var payment_id = response.razorpay_payment_id;
 
-          window.location = '/capture-payment?payment_id=' + payment_id + '&amount=' +amount + '&order_id=' + commerce_order_id + '&payment_settings=' + payment_settings;
+          window.location = '/capture-payment?payment_id=' + payment_id + '&amount=' + amount + '&order_id=' + commerce_order_id + '&payment_settings=' + payment_settings + '&response=' + JSON.stringify(response);
           $('razor-payment-id').val(response.razorpay_payment_id);
 
 
@@ -50,11 +51,11 @@
       var rzp1 = new Razorpay(options);
       rzp1.open();
 
-      document.getElementById("rzp-button1").onclick = function(e) {
-        alert("on click");
-        rzp1.open();
-        e.preventDefault();
-      }
+      // document.getElementById("rzp-button1").onclick = function(e) {
+      //   alert("on click");
+      //   rzp1.open();
+      //   e.preventDefault();
+      // }
 
 
     }

@@ -101,7 +101,7 @@ function razorpay_order($amount) {
   require 'libraries/razorpay-php/Razorpay.php';
 
 $api = new Api('rzp_test_6VOiSPZ8ClqeCo', 'HSFl7YizDJttZmxHi2a3123T');
-$order = $api->order->create(array('amount' => $amount, "currency" => "INR", "receipt" => "test_1"));
+$order = $api->order->create(array('amount' => $amount, "currency" => "INR", "receipt" => "test_1", 'payment_capture' => 0));
 
      return $order;
 
@@ -303,6 +303,16 @@ $payment_settings = json_decode($_GET['payment_settings']);
 
 $payment = capture_payment($payment_id, $amount, $order_id, $payment_settings);
 
+$response = json_decode($_GET['response']);
+// print '<pre>'; print_r("payment settings"); print '</pre>';
+// print '<pre>'; print_r($payment_settings); print '</pre>';exit;
+
+$razorpay_signature = $response->razorpay_signature;
+$razorpay_payment_id = $response->razorpay_payment_id;
+$razorpay_order_id = $response->razorpay_order_id;
+$secret = $payment_settings->key_secret;
+// print '<pre>'; print_r("response"); print '</pre>';
+// print '<pre>'; print_r($response); print '</pre>';exit;
 
 $order = commerce_order_load($commerce_order_id);
 // print '<pre>'; print_r("order here"); print '</pre>';
@@ -312,6 +322,20 @@ commerce_order_save($order);
 // print '<pre>'; print_r("order here"); print '</pre>';
 // print '<pre>'; print_r($order); print '</pre>';exit;
 // Send the customer on to the next checkout page.
+
+// hash_hmac('sha256', 'Message', 'secret', true);
+$generated_signature = hash_hmac('sha256', $razorpay_order_id + "|" + $razorpay_payment_id, $secret);
+// $generated_signature = hmac_sha256($razorpay_order_id + "|" + $razorpay_payment_id, $secret);
+
+// print '<pre>'; print_r("generated signature"); print '</pre>';
+// print '<pre>'; print_r($generated_signature); print '</pre>';
+// print '<pre>'; print_r("razorpay signature"); print '</pre>';
+// print '<pre>'; print_r($razorpay_signature); print '</pre>';exit;
+  if ($generated_signature == $razorpay_signature) {
+    // payment is successful
+  }
+
+
       commerce_payment_redirect_pane_next_page($order, t('Customer successfully submitted payment at the payment gateway.'));
       drupal_goto(commerce_checkout_order_uri($order));
 
