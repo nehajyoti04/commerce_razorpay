@@ -674,7 +674,7 @@ function commerce_razorpay_refund_transaction($capture_transaction, $amount, $or
   // $data->sourceOfFunds['type'] = 'CARD';
 
   // $url = $payment_method['settings']['txn_url'] . AMEX_TXN_PATH . $payment_method['settings']['merchant_id'] . '/order/' . (10000000000 + $auth_transaction_id) . '/transaction/' . $transaction->transaction_id;
-  // $result = _commerce_razorpay_put_request($url, $payment_method['settings']['password'], $data);
+
   // $transaction->payload = $result;
 
 
@@ -697,40 +697,41 @@ function commerce_razorpay_refund_transaction($capture_transaction, $amount, $or
 
 
 
-  // switch ($status) {
-  //   case 'refunded':
-  //     $transaction->status = COMMERCE_PAYMENT_STATUS_SUCCESS;
-  //     $transaction->remote_status = $result->response->gatewayCode;
-  //     $transaction->message = 'Refunded';
-  //     drupal_set_message(t('Transaction was processed succesfully'));
-  //     $return = TRUE;
-  //     break;
-  //   case 'partial':
-  //     $transaction->status = COMMERCE_PAYMENT_STATUS_SUCCESS;
-  //     $transaction->remote_status = $status;
-  //     $transaction->message = 'Refunded';
-  //     drupal_set_message(t('Transaction was processed succesfully, Partial refund of amount'. $amount_refunded .' was done'));
-  //     $return = TRUE;
-  //     break;
-  //   case 'PENDING':
-  //     $transaction->status = COMMERCE_PAYMENT_STATUS_PENDING;
-  //     $transaction->remote_status = $result->response->gatewayCode;
-  //     $transaction->message = $result->response->acquirerMessage;
-  //     drupal_set_message(t('Transaction pending'));
-  //     $return = TRUE;
-  //     break;
-  //   case 'FAILURE':
-  //     $transaction->status = COMMERCE_PAYMENT_STATUS_FAILURE;
-  //     $transaction->remote_status = $result->response->gatewayCode;
-  //     $transaction->message = $result->response->acquirerMessage;
-  //     break;
-  //   case 'UNKNOWN':
-  //     drupal_set_message(t('There was a problem processing your transaction. Your credit/debit card was not charged. Please try again later.'), 'error');
-  //     break;
-  //   case 'ERROR':
-  //     $transaction = _commerce_razorpay_error_process($result, $transaction);
-  //     break;
-  // }
+  switch ($status) {
+    case 'refunded':
+      $transaction->status = COMMERCE_PAYMENT_STATUS_SUCCESS;
+      // $transaction->remote_status = $result->response->gatewayCode;
+      $transaction->remote_status = $status;
+      $transaction->message = 'Refunded';
+      drupal_set_message(t('Transaction was processed succesfully'));
+      $return = TRUE;
+      break;
+    case 'partial':
+      $transaction->status = COMMERCE_PAYMENT_STATUS_SUCCESS;
+      $transaction->remote_status = $status;
+      $transaction->message = 'Refunded';
+      drupal_set_message(t('Transaction was processed succesfully, Partial refund of amount'. $amount_refunded .' was done'));
+      $return = TRUE;
+      break;
+    case 'PENDING':
+      $transaction->status = COMMERCE_PAYMENT_STATUS_PENDING;
+      $transaction->remote_status = $result->response->gatewayCode;
+      $transaction->message = $result->response->acquirerMessage;
+      drupal_set_message(t('Transaction pending'));
+      $return = TRUE;
+      break;
+    case 'FAILURE':
+      $transaction->status = COMMERCE_PAYMENT_STATUS_FAILURE;
+      $transaction->remote_status = $result->response->gatewayCode;
+      $transaction->message = $result->response->acquirerMessage;
+      break;
+    case 'UNKNOWN':
+      drupal_set_message(t('There was a problem processing your transaction. Your credit/debit card was not charged. Please try again later.'), 'error');
+      break;
+    case 'ERROR':
+      $transaction = _commerce_razorpay_error_process($result, $transaction);
+      break;
+  }
 
 
 // if ($auth_transaction->amount == 0 ) {
@@ -762,61 +763,4 @@ function _commerce_razorpay_error_process($result, $transaction) {
     commerce_payment_transaction_save($transaction);
   }
   return $transaction;
-}
-
-
-/**
- * A wrapper for curl to be reused for Amex requests.
- *
- * @param string $url
- * @param string $password
- * @param array $data
- * @return multitype:string
- */
-function _commerce_razorpay_put_request($url, $merchant_id, $password, $data = array()) {
-  // Set a one-minute timeout for this script
-  set_time_limit(60);
-
-  // Initialise output variable
-  $output = array();
-
-  // Encode the data array.
-  $data_string = json_encode($data);
-
-  // Open the cURL session
-  $curlSession = curl_init();
-
-  // Set the URL
-  curl_setopt($curlSession, CURLOPT_URL, $url);
-  // No headers, please
-  curl_setopt($curlSession, CURLOPT_HEADER, 0);
-  // It's a PUT request
-  curl_setopt($curlSession, CURLOPT_CUSTOMREQUEST, "PUT");
-  // Set the fields for the POST
-  curl_setopt($curlSession, CURLOPT_POSTFIELDS, $data_string);
-  curl_setopt($curlSession, CURLOPT_HTTPHEADER, array(
-  'Content-Type: application/json',
-  'Content-Length: ' . strlen($data_string))
-  );
-  // Return it direct, don't print it out
-  curl_setopt($curlSession, CURLOPT_RETURNTRANSFER, 1);
-  // This connection will timeout in 30 seconds
-  curl_setopt($curlSession, CURLOPT_TIMEOUT, 30);
-  //The next two lines must be present for the kit to work with newer version of cURL
-  //You should remove them if you have any problems in earlier versions of cURL
-  curl_setopt($curlSession, CURLOPT_SSL_VERIFYPEER, FALSE);
-  curl_setopt($curlSession, CURLOPT_SSL_VERIFYHOST, 1);
-
-  curl_setopt($curlSession, CURLOPT_HTTPAUTH, CURLAUTH_BASIC ) ;
-  curl_setopt($curlSession, CURLOPT_USERPWD, ":" . $password);
-
-  //Send the request and store the result in an array
-  $rawresponse = curl_exec($curlSession);
-  $response = json_decode($rawresponse);
-
-  // Close the cURL session
-  curl_close($curlSession);
-
-  // Return the output
-  return $response;
 }
