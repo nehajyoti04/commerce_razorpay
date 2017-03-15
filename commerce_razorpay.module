@@ -118,6 +118,7 @@ function commerce_razorpay_commerce_payment_method_info() {
  * Implements CALLBACK_commerce_payment_method_redirect_form().
  */
 function commerce_razorpay_redirect_form($form, &$form_state, $order, $payment_method) {
+  global $base_url;
   $wrapper = entity_metadata_wrapper('commerce_order', $order);
   $billing_address = $wrapper->commerce_customer_billing->commerce_customer_address->value();
   $commerce_order_id = $order->order_id;
@@ -144,7 +145,7 @@ function commerce_razorpay_redirect_form($form, &$form_state, $order, $payment_m
   );
   $form['#attached']['js'][] = "https://checkout.razorpay.com/v1/checkout.js";
 
-  drupal_add_js(array('commerce_razorpay' => array('amount' => $amount, 'key' => $key, 'logo' => drupal_get_path('module', 'commerce_razorpay') .'/logo.jpg', 'order_id' => $merchant_order_id, 'commerce_order_id' => $commerce_order_id, 'payment_settings' => $payment_method['settings'], 'billing_address' => $billing_address)), array('type' => 'setting'));
+  drupal_add_js(array('commerce_razorpay' => array('amount' => $amount, 'key' => $key, 'logo' => $base_url . "/" . drupal_get_path('module', 'commerce_razorpay') .'/logo.jpg', 'order_id' => $merchant_order_id, 'commerce_order_id' => $commerce_order_id, 'payment_settings' => $payment_method['settings'], 'billing_address' => $billing_address)), array('type' => 'setting'));
 
   $form['#attached']['js'][] = drupal_get_path('module', 'commerce_razorpay') . '/commerce_razorpay.js';
 
@@ -161,8 +162,11 @@ function commerce_razorpay_redirect_form($form, &$form_state, $order, $payment_m
  * Implements hook_redirect_form_validate().
  */
 function commerce_razorpay_submit_form_validate($order, $payment_method) {
-  // print '<pre>'; print_r("redirect validate form"); print '</pre>';
-  // print '<pre>'; print_r("redirect validate form"); print '</pre>';exit;
+  // This is getting called.
+  // print '<pre>'; print_r("submit validate form"); print '</pre>';
+  // print '<pre>'; print_r("REQUEST"); print '</pre>';
+  // print '<pre>'; print_r($_REQUEST); print '</pre>';
+  // exit;
 }
 /**
  * Payment method callback: submit form submission.
