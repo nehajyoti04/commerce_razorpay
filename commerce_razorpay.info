@@ -4,3 +4,7 @@ package = Commerce Payment
 core = 7.x
 project = commerce_razorpay
 files[php][] = Razorpay.php
+dependencies[] = commerce
+dependencies[] = commerce_payment
+dependencies[] = commerce_ui
+dependencies[] = commerce_order
