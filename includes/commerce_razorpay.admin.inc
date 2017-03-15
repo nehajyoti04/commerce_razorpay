@@ -4,8 +4,6 @@ use Razorpay\Api\Api;
  * Form callback: allows the user to refun a prior capture.
  */
 function commerce_razorpay_refund_form($form, &$form_state, $order, $transaction) {
-  // print '<pre>'; print_r("transaction"); print '</pre>';
-  // print '<pre>'; print_r($transaction); print '</pre>';exit;
 
   $form_state['order'] = $order;
   $form_state['transaction'] = $transaction;
@@ -72,9 +70,6 @@ function commerce_razorpay_refund_form_validate($form, &$form_state) {
  * Submit handler: process a prior authorization capture via AIM.
  */
 function commerce_razorpay_refund_form_submit($form, &$form_state) {
-  // print '<pre>'; print_r("form state"); print '</pre>';
-  // print '<pre>'; print_r($form_state); print '</pre>';exit;
-
   $order = $form_state['order'];
   $transaction = $form_state['transaction'];
   $amount = $form_state['values']['amount'];
@@ -82,46 +77,25 @@ function commerce_razorpay_refund_form_submit($form, &$form_state) {
   // $charge = $amount;
 
   $data = commerce_razorpay_request_refund($order, $transaction, $payment_method, $amount);
-  // print '<pre>'; print_r(" refund data"); print '</pre>';
-  // print '<pre>'; print_r($data); print '</pre>';exit;
 
-
-  // $response = commerce_razorpay_api_request($payment_method, $data);
   // $response = commerce_razorpay_refund_transaction($transaction, $amount, $order, $payment_method);
 
   $form_state['redirect'] = 'admin/commerce/orders/' . $form_state['order']->order_id . '/payment';
 }
 
-function commerce_razorpay_api_request($payment_method, $data = array()) {
-  // print '<pre>'; print_r("payement method"); print '</pre>';
-  // print '<pre>'; print_r($payment_method); print '</pre>';
-  // print '<pre>'; print_r("data"); print '</pre>';
-  // print '<pre>'; print_r($data); print '</pre>'; exit;
-
-}
-
 function commerce_razorpay_request_refund($order, $transaction, $payment_method, $amount='') {
-require 'libraries/razorpay-php/Razorpay.php';
-  // use Razorpay\Api\Api;
-$key_id = $payment_method['settings']['key_id'];
-$key_secret = $payment_method['settings']['key_secret'];
-$api = new Api($key_id, $key_secret);
-$razorpay_payment_id = $order->data['razorpay_payment_id'];
+  require 'libraries/razorpay-php/Razorpay.php';
+  $key_id = $payment_method['settings']['key_id'];
+  $key_secret = $payment_method['settings']['key_secret'];
+  $api = new Api($key_id, $key_secret);
+  $razorpay_payment_id = $order->data['razorpay_payment_id'];
 
+  $payment = $api->payment->fetch($razorpay_payment_id);
 
-$payment = $api->payment->fetch($razorpay_payment_id);
-// print '</pre>'; print_r("payment"); print '</pre>';
-// print '</pre>'; print_r($payment); print '</pre>';
-
-// print '<pre>'; print_r("amount"); print '</pre>';
-// print '<pre>'; print_r($amount); print '</pre>';exit;
-
-if($amount == '') {
-  $refund = $payment->refund();
-} else {
-  $refund = $payment->refund(array('amount' => $amount* 100)); // for partial refund
-}
-
-return $refund;
-
+  if($amount == '') {
+    $refund = $payment->refund();
+  } else {
+    $refund = $payment->refund(array('amount' => $amount* 100)); // for partial refund
+  }
+  return $refund;
 }
