@@ -81,19 +81,22 @@ function commerce_razorpay_refund_form_submit($form, &$form_state) {
   $payment_method = $form_state['payment_method'];
   // $charge = $amount;
 
-  $data = commerce_razorpay_request_refund($order, $transaction, $payment_method);
+  $data = commerce_razorpay_request_refund($order, $transaction, $payment_method, $amount);
+  // print '<pre>'; print_r(" refund data"); print '</pre>';
+  // print '<pre>'; print_r($data); print '</pre>';exit;
 
-  $response = commerce_razorpay_api_request($payment_method, $data);
-  $response = commerce_razorpay_refund_transaction($transaction, $amount);
+
+  // $response = commerce_razorpay_api_request($payment_method, $data);
+  // $response = commerce_razorpay_refund_transaction($transaction, $amount, $order, $payment_method);
 
   $form_state['redirect'] = 'admin/commerce/orders/' . $form_state['order']->order_id . '/payment';
 }
 
 function commerce_razorpay_api_request($payment_method, $data = array()) {
-  print '<pre>'; print_r("payement method"); print '</pre>';
-  print '<pre>'; print_r($payment_method); print '</pre>';
-  print '<pre>'; print_r("data"); print '</pre>';
-  print '<pre>'; print_r($data); print '</pre>'; exit;
+  // print '<pre>'; print_r("payement method"); print '</pre>';
+  // print '<pre>'; print_r($payment_method); print '</pre>';
+  // print '<pre>'; print_r("data"); print '</pre>';
+  // print '<pre>'; print_r($data); print '</pre>'; exit;
 
 }
 
@@ -107,14 +110,18 @@ $razorpay_payment_id = $order->data['razorpay_payment_id'];
 
 
 $payment = $api->payment->fetch($razorpay_payment_id);
+// print '</pre>'; print_r("payment"); print '</pre>';
+// print '</pre>'; print_r($payment); print '</pre>';
+
+// print '<pre>'; print_r("amount"); print '</pre>';
+// print '<pre>'; print_r($amount); print '</pre>';exit;
+
 if($amount == '') {
   $refund = $payment->refund();
 } else {
-  $refund = $payment->refund(array('amount' => $amount)); // for partial refund
+  $refund = $payment->refund(array('amount' => $amount* 100)); // for partial refund
 }
 
 return $refund;
-
-
 
 }
