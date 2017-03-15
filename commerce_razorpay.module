@@ -2,6 +2,43 @@
 use Razorpay\Api\Api;
 
 /**
+ * Implements hook_menu().
+ */
+function commerce_razorpay_menu() {
+
+  $items['razorpay-checkout'] = array(
+    'title' => 'Administration menu',
+    'description' => 'Adjust administration menu settings.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('commerce_razorpay_checkout_form'),
+    'access arguments' => array('administer site configuration'),
+    'file' => 'commerce_razorpay.checkout.inc',
+  );
+
+  $items['capture-payment'] = array(
+    'title' => 'Capture Payement',
+    'description' => 'Adjust administration menu settings.',
+    'page callback' => 'commerce_razorpay_capture_payment',
+    'access arguments' => array('administer site configuration'),
+  );
+
+  // Add a menu item for refunding authorizations.
+  $items['admin/commerce/orders/%commerce_order/payment/%commerce_payment_transaction/razorpay-refund'] = array(
+    'title' => 'Refund',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('commerce_razorpay_refund_form', 3, 5),
+    'access callback' => 'commerce_razorpay_refund_access',
+    'access arguments' => array(3, 5),
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'context' => MENU_CONTEXT_INLINE,
+    'weight' => 2,
+    'file' => 'includes/commerce_razorpay.admin.inc',
+  );
+
+  return $items;
+}
+
+/**
  * Administration forms form payment method.
  */
 function commerce_razorpay_settings_form($settings = NULL) {
@@ -32,80 +69,6 @@ function commerce_razorpay_settings_form($settings = NULL) {
 }
 
 /**
- * Implements hook_menu().
- */
-function commerce_razorpay_menu() {
-
-$items['razorpay-checkout'] = array(
-    'title' => 'Administration menu',
-    'description' => 'Adjust administration menu settings.',
-    'page callback' => 'drupal_get_form',
-    'page arguments' => array('commerce_razorpay_checkout_form'),
-    'access arguments' => array('administer site configuration'),
-    'file' => 'commerce_razorpay.checkout.inc',
-  );
-
-$items['capture-payment'] = array(
-    'title' => 'Capture Payement',
-    'description' => 'Adjust administration menu settings.',
-    'page callback' => 'commerce_razorpay_capture_payment',
-    'access arguments' => array('administer site configuration'),
-  );
-
-// Add a menu item for refunding authorizations.
-  $items['admin/commerce/orders/%commerce_order/payment/%commerce_payment_transaction/razorpay-refund'] = array(
-    'title' => 'Refund',
-    'page callback' => 'drupal_get_form',
-    'page arguments' => array('commerce_razorpay_refund_form', 3, 5),
-    'access callback' => 'commerce_razorpay_refund_access',
-    'access arguments' => array(3, 5),
-    'type' => MENU_DEFAULT_LOCAL_TASK,
-    'context' => MENU_CONTEXT_INLINE,
-    'weight' => 2,
-    'file' => 'includes/commerce_razorpay.admin.inc',
-  );
-
-  $items['razorpay-test'] = array(
-    'page callback' => 'razorpay_test',
-    'access callback' => TRUE,
-  );
-return $items;
-}
-
-function razorpay_test(){
-$output = "hello";
-require 'libraries/razorpay-php/Razorpay.php';
-
-$api = new Api('rzp_test_6VOiSPZ8ClqeCo', 'HSFl7YizDJttZmxHi2a3123T');
-
-$payment = $api->order->fetch('order_7Slp5o0UwC47mO');
-
-
-
-// $payment = $api->order->fetch($order->data['merchant_order_id']);
-  $payment_object = $payment->payments();
-  // print '<pre>'; print_r("status"); print '</pre>';
-  // print '<pre>'; print_r($payment_object['items'][0]->status); print '</pre>';
-  // print '<pre>'; print_r("payment"); print '</pre>';
-  // print '<pre>'; print_r($payment_object); print '</pre>';
-
-  $status = $payment_object['items'][0]->status; // eg : refunded.
-  $refund_status = $payment_object['items'][0]->refund_status; // eg : full.
-  // card_id
-
-  print '<pre>'; print_r("status"); print '</pre>';
-  print '<pre>'; print_r($status); print '</pre>';
-
-
-print '<pre>'; print_r("payment"); print '</pre>';
-print '<pre>'; print_r($payment->payments()); print '</pre>';exit;
-// $payment->capture(array('amount' => 500));
-
-
-return $output;
-}
-
-/**
  * Implements hook_commerce_payment_method_info().
  */
 function commerce_razorpay_commerce_payment_method_info() {
@@ -127,73 +90,52 @@ function commerce_razorpay_commerce_payment_method_info() {
 }
 
 /**
- * Create an order.
- * @return [type] [description]
+ * Implements hook_commerce_checkout_pane_info().
  */
-function razorpay_order($amount, $key_id, $key_secret) {
-// $name = 'razorpay-php';
-// if (($library = libraries_load($name)) && !empty($library['loaded'])) {
-//   $fb_lib_path = function_exists('libraries_get_path') ? libraries_get_path('razorpay-php') : 'sites/all/libraries/razorpay-php';
+// function commerce_razorpay_commerce_checkout_pane_info() {
+//   $checkout_panes = array();
 
-  // require '/var/www/npro/libraries/razorpay-php/Razorpay.php';
-  require 'libraries/razorpay-php/Razorpay.php';
+//   $checkout_panes['commerce_razorpay'] = array(
+//     'title' => t('Payment'),
+//     'page' => 'review',
+//     'file' => 'includes/commerce_payment.checkout_pane.inc',
+//     'base' => 'commerce_payment_pane',
+//     'weight' => 10,
+//   );
 
-// $api = new Api('rzp_test_6VOiSPZ8ClqeCo', 'HSFl7YizDJttZmxHi2a3123T');
-$api = new Api($key_id, $key_secret);
-$order = $api->order->create(array('amount' => $amount, "currency" => "INR", "receipt" => "test_1", 'payment_capture' => false));
+//   $checkout_panes['commerce_razorpay_redirect'] = array(
+//     'title' => t('Off-site payment redirect'),
+//     'page' => 'payment',
+//     'locked' => TRUE,
+//     'file' => 'includes/commerce_payment.checkout_pane.inc',
+//     'base' => 'commerce_payment_redirect_pane',
+//   );
 
-     return $order;
-
-
-//  try {
-//      // if (!class_exists('Api') && !@include($fb_platform)) {
-//      if(!@include($fb_platform)){
-//       //show error
-//       watchdog('commerce_razorpay', 'class does not exist');
-//       return NULL;
-//      }
-//      // $fb = new Facebook(array(
-//      //   'appId' => $appId,
-//      //   'secret' => $secret,
-//      //   'cookie' => $cookie));
-//      $api = new Api('rzp_test_26ccbdbfe0e84b', '69b2e24411e384f91213f22a');
-//      $order = $api->order->create(array('amount' => 100, "currency", "INR", "receipt", "test_1", "payment_capture", false));
-//      // print '<pre>'; print_r("order"); print '</pre>';
-//      // print '<pre>'; print_r($order); print '</pre>';exit;
-//      return $order;
-//  }
-//  catch (Exception $e) {}
-
-
-// $order = $api->order->create(array('amount' => 100, "currency", "INR", "receipt", "test_1", "payment_capture", false));
-
-
-// return $order;
-}
+//   return $checkout_panes;
+// }
 
 /**
  * Implements CALLBACK_commerce_payment_method_redirect_form().
  */
 function commerce_razorpay_redirect_form($form, &$form_state, $order, $payment_method) {
-// $form = array();
-    $commerce_order_id = $order->order_id;
-    $amount = $order->commerce_order_total[LANGUAGE_NONE][0]['amount'];
-    $key = $payment_method['settings']['key_id'];
-    $key_secret = $payment_method['settings']['key_secret'];
-    $order = razorpay_order($amount, $key, $key_secret);
-    $order_id = $order->id;
-    // $order_id = '';
-    // $commerce_order_id = arg(1);
-    // $amount = 100;
+  $wrapper = entity_metadata_wrapper('commerce_order', $order);
+  $billing_address = $wrapper->commerce_customer_billing->commerce_customer_address->value();
+  $commerce_order_id = $order->order_id;
+  $amount = $order->commerce_order_total[LANGUAGE_NONE][0]['amount'];
+  $key = $payment_method['settings']['key_id'];
+  $key_secret = $payment_method['settings']['key_secret'];
+  $order = razorpay_order($amount, $key, $key_secret);
+  $merchant_order_id = $order->id;
 
+  // $order_id = $order->id;
 
-      $form['help']['#markup'] = '<div class="checkout-help">' . t('Please wait while you are redirected to the payment server. If nothing happens within 10 seconds, please click on the button below.') . '</div>';
+  $form['help']['#markup'] = '<div class="checkout-help">' . t('Please wait while you are redirected to the payment server. If nothing happens within 10 seconds, please click on the button below.') . '</div>';
 
-      $form['razor_payment_id'] = array(
-        '#attributes' => array('id' => 'razor-payment-id'),
-         '#type' => 'hidden',
-         '#value' => '',
-      );
+  $form['razor_payment_id'] = array(
+    '#attributes' => array('id' => 'razor-payment-id'),
+     '#type' => 'hidden',
+     '#value' => '',
+  );
 
   $form['submit'] = array(
     '#type' => 'submit',
@@ -202,9 +144,8 @@ function commerce_razorpay_redirect_form($form, &$form_state, $order, $payment_m
   );
   $form['#attached']['js'][] = "https://checkout.razorpay.com/v1/checkout.js";
 
-
-drupal_add_js(array('commerce_razorpay' => array('amount' => $amount, 'key' => $key, 'logo' => drupal_get_path('module', 'commerce_razorpay') .'/logo.jpg', 'order_id' => $order_id, 'commerce_order_id' => $commerce_order_id, 'payment_settings' => $payment_method['settings'])), array('type' => 'setting'));
-$form['#attached']['js'][] = drupal_get_path('module', 'commerce_razorpay') . '/commerce_razorpay.js';
+  drupal_add_js(array('commerce_razorpay' => array('amount' => $amount, 'key' => $key, 'logo' => drupal_get_path('module', 'commerce_razorpay') .'/logo.jpg', 'order_id' => $merchant_order_id, 'commerce_order_id' => $commerce_order_id, 'payment_settings' => $payment_method['settings'], 'billing_address' => $billing_address)), array('type' => 'setting'));
+  $form['#attached']['js'][] = drupal_get_path('module', 'commerce_razorpay') . '/commerce_razorpay.js';
 
   return array(
     'form' => array(
@@ -215,23 +156,16 @@ $form['#attached']['js'][] = drupal_get_path('module', 'commerce_razorpay') . '/
 
 }
 
-
 /**
- * Implements hook_redirect_form_validate().
+ * Create an order.
+ * @return [type] [description]
  */
-function commerce_razorpay_redirect_form_validate($order, $payment_method) {
-  $message = t('Security error ip Address was: @ip', array('@ip' => ip_address()));
-  print '<pre>'; print_r("request"); print '</pre>';
-  print '<pre>'; print_r($_REQUEST); print '</pre>';exit;
+function razorpay_order($amount, $key_id, $key_secret) {
+  require 'libraries/razorpay-php/Razorpay.php';
+  $api = new Api($key_id, $key_secret);
+  $order = $api->order->create(array('amount' => $amount, "currency" => "INR", "receipt" => "test_1", 'payment_capture' => false));
 
-
-
-    // Here you need to put in the routines for a successful.
-    // Transaction such as sending an email to customer.
-    // Setting database status, informing logistics etc etc.
-    commerce_razorpay_transaction($order, $payment_method);
-    return drupal_set_message(t('Thank you for shopping with us. Your account has been charged and your transaction is successful.'));
-
+   return $order;
 }
 
 /**
@@ -449,87 +383,6 @@ function razorpay_payment_all_refunds($payment_id = 'pay_29QQoUBi66xm2f', $from 
   $payments = $api->payment->fetch($payment_id)->refunds()->all($params);
 
 }
-
-/**
- * Create an order.
- * @return [type] [description]
- */
-// function create_an_order($amount) {
-// $name = 'razorpay-php';
-// // if (($library = libraries_load($name)) && !empty($library['loaded'])) {
-
-//   $fb_lib_path = function_exists('libraries_get_path') ? libraries_get_path('razorpay-php') : 'sites/all/libraries/razorpay-php';
-
-//   // require '/var/www/npro/libraries/razorpay-php/Razorpay.php';
-//   require 'libraries/razorpay-php/Razorpay.php';
-
-// $api = new Api('rzp_test_6VOiSPZ8ClqeCo', 'HSFl7YizDJttZmxHi2a3123T');
-// $order = $api->order->create(array('amount' => $amount, "currency" => "INR", "receipt" => "test_1"));
-
-//      return $order;
-
-
-//  try {
-//      // if (!class_exists('Api') && !@include($fb_platform)) {
-//      if(!@include($fb_platform)){
-//       //show error
-//       watchdog('commerce_razorpay', 'class does not exist');
-//       return NULL;
-//      }
-//      // $fb = new Facebook(array(
-//      //   'appId' => $appId,
-//      //   'secret' => $secret,
-//      //   'cookie' => $cookie));
-//      $api = new Api('rzp_test_26ccbdbfe0e84b', '69b2e24411e384f91213f22a');
-//      $order = $api->order->create(array('amount' => 100, "currency", "INR", "receipt", "test_1", "payment_capture", false));
-//      // print '<pre>'; print_r("order"); print '</pre>';
-//      // print '<pre>'; print_r($order); print '</pre>';exit;
-//      return $order;
-//  }
-//  catch (Exception $e) {}
-
-
-// $order = $api->order->create(array('amount' => 100, "currency", "INR", "receipt", "test_1", "payment_capture", false));
-
-
-// return $order;
-// }
-
-/**
- * Implements hook_commerce_checkout_pane_info().
- */
-function commerce_razorpay_commerce_checkout_pane_info() {
-  $checkout_panes = array();
-
-  $checkout_panes['commerce_razorpay'] = array(
-    'title' => t('Payment'),
-    'page' => 'review',
-    'file' => 'includes/commerce_payment.checkout_pane.inc',
-    'base' => 'commerce_payment_pane',
-    'weight' => 10,
-  );
-
-  $checkout_panes['commerce_razorpay_redirect'] = array(
-    'title' => t('Off-site payment redirect'),
-    'page' => 'payment',
-    'locked' => TRUE,
-    'file' => 'includes/commerce_payment.checkout_pane.inc',
-    'base' => 'commerce_payment_redirect_pane',
-  );
-
-  return $checkout_panes;
-}
-
-function commerce_razorpay_form_alter($form, &$form_state, $form_id) {
-  global $user;
-
-  if($form_id == 'commerce_checkout_form_checkout') {
-  }
-  if($form_id == 'commerce_checkout_form_review') {
-
-  }
-}
-
 
 /**
  * Process a Void or Force transaction.
