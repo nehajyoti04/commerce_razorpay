@@ -261,6 +261,7 @@ function commerce_razorpay_transaction($key_id, $key_secret, $order) {
   $transaction->instance_id = $order->data['payment_method_instance_id'];
   $transaction->amount = $amount;
   $transaction->currency_code = $currency;
+  $transaction->remote_id = $payment_object['items'][0]->id;
   // $transaction->remote_id = $txnid;
   $instance = explode('|', $transaction->instance_id);
   $transaction->payment_method = $instance[0];
@@ -293,10 +294,6 @@ function commerce_razorpay_transaction($key_id, $key_secret, $order) {
 
   // $card_details = $order->data['commerce_payment_example']['credit_card'];
 
-  // $transaction->amount = $charge['amount'];
-  // $transaction->currency_code = $charge['currency_code'];
-  //
-  //
   //
   //
   // $transaction->status = COMMERCE_PAYMENT_STATUS_SUCCESS;
@@ -313,41 +310,6 @@ function commerce_razorpay_transaction($key_id, $key_secret, $order) {
   //
   //
 
-
-  // $wrapper = entity_metadata_wrapper('commerce_order', $order);
-  // $currency = $wrapper->commerce_order_total->currency_code->value();
-  // $amount = $wrapper->commerce_order_total->amount->value();
-
-  // $transaction = commerce_payment_transaction_new('commerce_razorpay', $order->order_id);
-  // $transaction->instance_id = $payment_method['instance_id'];
-  // $transaction->amount = $amount;
-  // $transaction->currency_code = $currency;
-  // $transaction->remote_id = $txnid;
-  // $transaction->payload = $payload;
-  // $instance = explode('|', $payment_method['instance_id']);
-  // $transaction->payment_method = $instance[0];
-  // $transaction->message = '';
-  // $transaction->message_variables = '';
-
-  // // Succeessful.
-  // if ($status == "success") {
-  //   $transaction->remote_status = t('Success');
-  //   $transaction->message = t('Your transation ID is :') . $txnid . t('. Payment received at') . ' ' . date("d-m-Y H:i:s", REQUEST_TIME);
-  //   $transaction->status = COMMERCE_PAYMENT_STATUS_SUCCESS;
-  // }
-  // elseif ($status == "pending") {
-  //   // Batch process - Pending orders.
-  //   $transaction->remote_status = t('Pending');
-  //   $transaction->message = t('Your transation ID is :') . $txnid . t('. Payment pending at') . ' ' . date("d-m-Y H:i:s", REQUEST_TIME);
-  //   $transaction->status = COMMERCE_PAYMENT_STATUS_PENDING;
-  // }
-  // elseif ($status == "failure") {
-  //   // Failed transaction.
-  //   $transaction->remote_status = t('Failure');
-  //   $transaction->message = t('Your transation ID is :') . $txnid . t('. Payment failed at') . ' ' . date("d-m-Y H:i:s", REQUEST_TIME);
-  //   $transaction->status = COMMERCE_PAYMENT_STATUS_FAILURE;
-  // }
-  // commerce_payment_transaction_save($transaction);
 }
 
 
@@ -424,9 +386,7 @@ function commerce_razorpay_refund_access($order, $transaction) {
  */
 function commerce_razorpay_refund_transaction($capture_transaction, $amount, $order, $payment_method) {
   $return = FALSE;
-
   require 'libraries/razorpay-php/Razorpay.php';
-  // use Razorpay\Api\Api;
   $key_id = $payment_method['settings']['key_id'];
   $key_secret = $payment_method['settings']['key_secret'];
   $api = new Api($key_id, $key_secret);
@@ -567,24 +527,8 @@ function razorpay_order($amount, $key_id, $key_secret, $currency, $receipt, $pay
    return $order;
 }
 
-function get_payments($count = 2, $skip = 1, $from = 1400826740) {
-  $api = new Api('rzp_test_6VOiSPZ8ClqeCo', 'HSFl7YizDJttZmxHi2a3123T');
-  $params = array(
-      'count' => 2,
-      'skip'  => 1,
-      'from'  => 1400826740,
-      'order'
-  );
-
-  $payments = $api->payment->all($params);
-
-}
-
 function capture_payment($payment_id, $amount = '', $order_id = '', $payment_settings = '') {
-  $fb_lib_path = function_exists('libraries_get_path') ? libraries_get_path('razorpay-php') : 'sites/all/libraries/razorpay-php';
-
   require 'libraries/razorpay-php/Razorpay.php';
-  // require '/var/www/npro/libraries/razorpay-php/Razorpay.php';
   $key_id = $payment_settings->key_id;
   $key_secret = $payment_settings->key_secret;
   $api = new Api($key_id, $key_secret);
@@ -592,46 +536,12 @@ function capture_payment($payment_id, $amount = '', $order_id = '', $payment_set
   $payment = $api->payment->fetch($payment_id);
   $payment->capture(array('amount' => $amount));
   $order_id = $_GET['order_id'];
-// Success URL: checkout/ORDER_ID/payment/return/ORDER_PAYMENT_REDIRECT_KEY
+  // Success URL: checkout/ORDER_ID/payment/return/ORDER_PAYMENT_REDIRECT_KEY
+  // @TODO Redirect as per success and failure url.
+  if($payment->status == 'authorized') {
+  } else {
+  }
+  // Fail URL: checkout/ORDER_ID/payment/back/ORDER_PAYMENT_REDIRECT_KEY
 
-if($payment->status == 'authorized') {
-} else {
-  print '<pre>'; print_r("payment status"); print '</pre>';
-  print '<pre>'; print_r($payment->status); print '</pre>'; exit;
-}
-// Fail URL: checkout/ORDER_ID/payment/back/ORDER_PAYMENT_REDIRECT_KEY
-
-
-return $payment;
-}
-
-
-/**
- * Retrieve a refund of payment by id.
- * @param  {[type]} $payment_id [description]
- * @param  {[type]} $refund_id  [description]
- * @return {[type]}             [description]
- */
-
-function razorpay_payment_refund($payment_id = 'pay_29QQoUBi66xm2f', $refund_id = 'rfnd_AABBdHIieexn5c') {
-
-
-  $api = new Api('rzp_test_26ccbdbfe0e84b', '69b2e24411e384f91213f22a');
-
-  $payment = $api->payment->fetch($payment_id)->refunds()->fetch($refund_id);
-
-}
-
-function razorpay_payment_all_refunds($payment_id = 'pay_29QQoUBi66xm2f', $from = 1500826740, $to = 1500826760, $count = 2, $skip = 1) {
-  $api = new Api('rzp_test_26ccbdbfe0e84b', '69b2e24411e384f91213f22a');
-
-  $params = array(
-      'from'  => 1500826740,
-      'to'    => 1500826760,
-      'count' => 2,
-      'skip'  => 1
-  );
-
-  $payments = $api->payment->fetch($payment_id)->refunds()->all($params);
-
+  return $payment;
 }

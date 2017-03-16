@@ -78,7 +78,7 @@ function commerce_razorpay_refund_form_submit($form, &$form_state) {
 
   $data = commerce_razorpay_request_refund($order, $transaction, $payment_method, $amount);
 
-  // $response = commerce_razorpay_refund_transaction($transaction, $amount, $order, $payment_method);
+  $response = commerce_razorpay_refund_transaction($transaction, $amount, $order, $payment_method);
 
   $form_state['redirect'] = 'admin/commerce/orders/' . $form_state['order']->order_id . '/payment';
 }
