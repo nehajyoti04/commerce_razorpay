@@ -74,12 +74,8 @@ function commerce_razorpay_refund_form_submit($form, &$form_state) {
   $transaction = $form_state['transaction'];
   $amount = $form_state['values']['amount'];
   $payment_method = $form_state['payment_method'];
-  // $charge = $amount;
-
   $data = commerce_razorpay_request_refund($order, $transaction, $payment_method, $amount);
-
   $response = commerce_razorpay_refund_transaction($transaction, $amount, $order, $payment_method);
-
   $form_state['redirect'] = 'admin/commerce/orders/' . $form_state['order']->order_id . '/payment';
 }
 
@@ -89,7 +85,6 @@ function commerce_razorpay_request_refund($order, $transaction, $payment_method,
   $key_secret = $payment_method['settings']['key_secret'];
   $api = new Api($key_id, $key_secret);
   $razorpay_payment_id = $order->data['razorpay_payment_id'];
-
   $payment = $api->payment->fetch($razorpay_payment_id);
 
   if($amount == '') {

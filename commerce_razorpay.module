@@ -34,52 +34,9 @@ function commerce_razorpay_menu() {
     'weight' => 2,
     'file' => 'includes/commerce_razorpay.admin.inc',
   );
-
-  $items['test-razorpay'] = array(
-    'page callback' => 'test_commerce_razorpay',
-    'access callback' => TRUE,
-  );
-
   return $items;
 }
 
-function test_commerce_razorpay() {
-  $output = "hello";
-  require 'libraries/razorpay-php/Razorpay.php';
-  // use Razorpay\Api\Api;
-  // $key_id = $payment_method['settings']['key_id'];
-  // $key_secret = $payment_method['settings']['key_secret'];
-
-  $key_id = 'rzp_test_6VOiSPZ8ClqeCo';
-  $key_secret = 'HSFl7YizDJttZmxHi2a3123T';
-
-  $api = new Api($key_id, $key_secret);
-
-  $order_id = 'order_7Sy38tIy4TSFsI';
-
-
-
-  $payment = $api->order->fetch($order_id);
-  $payment_object = $payment->payments();
-  print '<pre>'; print_r("order"); print '</pre>';
-  print '<pre>'; print_r($order); print '</pre>';
-
-  print '<pre>'; print_r("payment"); print '</pre>';
-  print '<pre>'; print_r($payment_object); print '</pre>';
-  // // print '<pre>'; print_r("status"); print '</pre>';
-  // // print '<pre>'; print_r($payment_object); print '</pre>';
-  // $status = $payment_object['items'][0]->status; // eg : refunded, captured
-  // $refund_status = $payment_object['items'][0]->refund_status; // eg : full, partial
-  // $amount_refunded = ($payment_object['items'][0]->amount_refunded)/100;
-
-  $payment_id = 'pay_7Sy55njFtQdI4D';
-  $payment = $api->payment->fetch($payment_id);
-  print '<pre>'; print_r("payment"); print '</pre>';
-  print '<pre>'; print_r($payment); print '</pre>'; exit;
-
-
-  return $output;
-}
 /**
  * Administration forms form payment method.
  */
@@ -126,7 +83,6 @@ function commerce_razorpay_commerce_payment_method_info() {
     'terminal' => TRUE,
     'offsite' => TRUE,
     'offsite_autoredirect' => FALSE,
-    // 'callbacks' => array('redirect_form' => 'commerce_razorpay_commerce_payment_method_redirect_form'),
   );
   return $payment_methods;
 }
@@ -183,41 +139,6 @@ function commerce_razorpay_redirect_form($form, &$form_state, $order, $payment_m
 }
 
 /**
- * Implements hook_redirect_form_validate().
- */
-function commerce_razorpay_submit_form_validate($order, $payment_method) {
-  // This is getting called.
-  // print '<pre>'; print_r("submit validate form"); print '</pre>';
-  // print '<pre>'; print_r("REQUEST"); print '</pre>';
-  // print '<pre>'; print_r($_REQUEST); print '</pre>';
-  // exit;
-}
-/**
- * Payment method callback: submit form submission.
- */
-function commerce_razorpay_submit_form_submit($payment_method, $pane_form, $pane_values, $order, $charge) {
-  // Trying to get razorpay payement id.
-
-  // Just as an example, we might store information in the order object from the
-  // payment parameters, though we would never save a full credit card number,
-  // even in examples!
-  // $number = $pane_values['credit_card']['number'];
-  // $pane_values['credit_card']['number'] = substr($number, 0, 4) . str_repeat('-', strlen($number) - 8) . substr($number, -4);
-
-  // $order->data['commerce_payment_example'] = $pane_values;
-
-  // Every attempted transaction should result in a new transaction entity being
-  // created for the order to log either the success or the failure.
-  // print '<pre>'; print_r("order"); print '</pre>';
-  // print '<pre>'; print_r($order); print '</pre>';
-
-  // print '<pre>'; print_r("request submit"); print '</pre>';
-  // print '<pre>'; print_r($_REQUEST); print '</pre>';exit;
-
-  // commerce_razorpay_transaction($payment_method, $order, $charge);
-}
-
-/**
  * Creates an example payment transaction for the specified charge amount.
  *
  * @param $payment_method
@@ -233,28 +154,18 @@ function commerce_razorpay_transaction($key_id, $key_secret, $order) {
   $api = new Api($key_id, $key_secret);
 
   // Need to store razorpay payment id in transaction .. this all is hit and trial.
-
   $wrapper = entity_metadata_wrapper('commerce_order', $order);
   $currency = $wrapper->commerce_order_total->currency_code->value();
   $amount = $wrapper->commerce_order_total->amount->value();
-  // $receipt = "test_1";
-  // $payment_capture = false;
-  // $notes  = '';
-
-  // $razorpay_order = razorpay_order($amount, $key_id, $key_secret, $currency, $receipt, $payment_capture, $notes);
-  // $merchant_order_id = $razorpay_order->id;
-  // $order->data['merchant_order_id'] = $merchant_order_id;
-  // commerce_order_save($order);
 
   $payment = $api->order->fetch($order->data['merchant_order_id']);
-
   $payment_object = $payment->payments();
-
   $status = $payment_object['items'][0]->status; // eg : refunded, captured, authorized, failed.
   $refund_status = $payment_object['items'][0]->refund_status; // eg : full, partial
   $amount_refunded = ($payment_object['items'][0]->amount_refunded)/100;
   $service_tax = $payment_object['items'][0]->service_tax;
   // card_id
+  //  @TODO Save Card details , method of payement etc.
 
   $transaction = commerce_payment_transaction_new('commerce_razorpay', $order->order_id);
   // $transaction->instance_id = $payment_method['instance_id'];
@@ -266,11 +177,10 @@ function commerce_razorpay_transaction($key_id, $key_secret, $order) {
   $instance = explode('|', $transaction->instance_id);
   $transaction->payment_method = $instance[0];
   // $transaction->message = '';
+  //  @TODO Update transaction message .
   $transaction->message = 'Razorpay ....';
   $transaction->message_variables = '';
 
-
-  //
   // Succeessful.
   if ($status == "captured") {
     // Status is success.
@@ -291,72 +201,45 @@ function commerce_razorpay_transaction($key_id, $key_secret, $order) {
     $transaction->status = COMMERCE_PAYMENT_STATUS_FAILURE;
   }
   commerce_payment_transaction_save($transaction);
-
-  // $card_details = $order->data['commerce_payment_example']['credit_card'];
-
-  //
-  //
-  // $transaction->status = COMMERCE_PAYMENT_STATUS_SUCCESS;
-
-
-  // $transaction->message_variables = array(
-  //   '@number' => $card_details['number'],
-  //   '@month' => $card_details['exp_month'],
-  //   '@year' => $card_details['exp_year'],
-  // );
-
-  // commerce_payment_transaction_save($transaction);
-  // return $transaction;
-  //
-  //
-
 }
 
 
 function commerce_razorpay_capture_payment($payment_id = '') {
   $payment_id = $_GET['payment_id'];
   $amount = $_GET['amount'];
-$commerce_order_id = $_GET['order_id'];
-$order_id = '';
-$payment_settings = json_decode($_GET['payment_settings']);
+  $commerce_order_id = $_GET['order_id'];
+  $order_id = '';
+  $payment_settings = json_decode($_GET['payment_settings']);
 
-$payment = capture_payment($payment_id, $amount, $order_id, $payment_settings);
+  $payment = capture_payment($payment_id, $amount, $order_id, $payment_settings);
 
-$response = json_decode($_GET['response']);
+  $response = json_decode($_GET['response']);
 
-$razorpay_signature = $response->razorpay_signature;
-$razorpay_payment_id = $response->razorpay_payment_id;
-$razorpay_order_id = $response->razorpay_order_id;
-$key_id = $payment_settings->key_id;
-$key_secret = $payment_settings->key_secret;
+  $razorpay_signature = $response->razorpay_signature;
+  $razorpay_payment_id = $response->razorpay_payment_id;
+  $razorpay_order_id = $response->razorpay_order_id;
+  $key_id = $payment_settings->key_id;
+  $key_secret = $payment_settings->key_secret;
 
-$order = commerce_order_load($commerce_order_id);
-$order->data['razorpay_payment_id'] = $payment_id;
-// $order->data['merchant_order_id'] = $razorpay_order_id;
-commerce_order_save($order);
-
-
-commerce_razorpay_transaction($key_id, $key_secret, $order);
-// Send the customer on to the next checkout page.
-
-// hash_hmac('sha256', 'Message', 'secret', true);
-$generated_signature = hash_hmac('sha256', $razorpay_order_id + "|" + $razorpay_payment_id, $key_secret);
-// $generated_signature = hmac_sha256($razorpay_order_id + "|" + $razorpay_payment_id, $secret);
-
-// print '<pre>'; print_r("generated signature"); print '</pre>';
-// print '<pre>'; print_r($generated_signature); print '</pre>';
-// print '<pre>'; print_r("razorpay signature"); print '</pre>';
-// print '<pre>'; print_r($razorpay_signature); print '</pre>';exit;
-  if ($generated_signature == $razorpay_signature) {
-    // payment is successful
-  }
-commerce_order_status_update($order, 'checkout_complete');
-// commerce_order_save($order);
-drupal_goto("checkout/".$commerce_order_id."/complete");
-//       // commerce_payment_redirect_pane_next_page($order, t('Customer successfully submitted payment at the payment gateway.'));
-      // drupal_goto(commerce_checkout_order_uri($order));
+  $order = commerce_order_load($commerce_order_id);
+  $order->data['razorpay_payment_id'] = $payment_id;
+  // $order->data['merchant_order_id'] = $razorpay_order_id;
+  commerce_order_save($order);
 
 
+  commerce_razorpay_transaction($key_id, $key_secret, $order);
+  // Send the customer on to the next checkout page.
+  // @TODO validate  signatures.
+  // hash_hmac('sha256', 'Message', 'secret', true);
+  $generated_signature = hash_hmac('sha256', $razorpay_order_id + "|" + $razorpay_payment_id, $key_secret);
+  // $generated_signature = hmac_sha256($razorpay_order_id + "|" + $razorpay_payment_id, $secret);
+
+    if ($generated_signature == $razorpay_signature) {
+      // payment is successful
+    }
+    // DO not need to  save order after order_status_update because 3rd arg is by default FALSE.
+  commerce_order_status_update($order, 'checkout_complete');
+  drupal_goto("checkout/".$commerce_order_id."/complete");
 }
 
 /**
@@ -390,16 +273,8 @@ function commerce_razorpay_refund_transaction($capture_transaction, $amount, $or
   $key_id = $payment_method['settings']['key_id'];
   $key_secret = $payment_method['settings']['key_secret'];
   $api = new Api($key_id, $key_secret);
-
-  // print '<pre>'; print_r("capture transaction"); print '</pre>';
-  // print '<pre>'; print_r($capture_transaction); print '</pre>';exit;
   $instance_id = $capture_transaction->instance_id;
   $payment_method = commerce_payment_method_instance_load($instance_id);
-  // print '<pre>'; print_r("payment method"); print '</pre>';
-  // print '<pre>'; print_r($payment_method); print '</pre>';exit;
-
-  // $auth_transaction_id = $capture_transaction->data->order->reference;
-  // $auth_transaction = $capture_transaction->transaction_id;
 
   $transaction = commerce_payment_transaction_new('commerce_razorpay', $capture_transaction->order_id);
   $transaction->amount = - commerce_currency_decimal_to_amount($amount, $capture_transaction->currency_code);
@@ -409,43 +284,12 @@ function commerce_razorpay_refund_transaction($capture_transaction, $amount, $or
   $transaction->remote_id = $capture_transaction->remote_id;
 
   commerce_payment_transaction_save($transaction);
-
-  // $data = new stdClass();
-
-  // $data->apiOperation = 'REFUND';
-
-  // $data->order['reference'] = $auth_transaction_id;
-
-  // $data->transaction['amount'] = $amount;
-  // $data->transaction['currency'] = $transaction->currency_code;
-  // $data->transaction['reference'] = $transaction->transaction_id;
-
-  // $data->sourceOfFunds['session'] = $transaction->remote_id;
-  // $data->sourceOfFunds['type'] = 'CARD';
-
-  // $url = $payment_method['settings']['txn_url'] . AMEX_TXN_PATH . $payment_method['settings']['merchant_id'] . '/order/' . (10000000000 + $auth_transaction_id) . '/transaction/' . $transaction->transaction_id;
-
-  // $transaction->payload = $result;
-
-
-
+  // @TODO Update transaction data/ CROSS check transaction all the columns.
   $payment = $api->order->fetch($order->data['merchant_order_id']);
   $payment_object = $payment->payments();
-  // print '<pre>'; print_r("payment"); print '</pre>';
-  // print '<pre>'; print_r($payment_object); print '</pre>';
-  // print '<pre>'; print_r("status"); print '</pre>';
-  // print '<pre>'; print_r($payment_object); print '</pre>';
   $status = $payment_object['items'][0]->status; // eg : refunded, captured
   $refund_status = $payment_object['items'][0]->refund_status; // eg : full, partial
   $amount_refunded = ($payment_object['items'][0]->amount_refunded)/100;
-  // card_id
-
-  // print '<pre>'; print_r("status"); print '</pre>';
-  // print '<pre>'; print_r($status); print '</pre>';
-
-  // exit;
-
-
 
   switch ($status) {
     case 'refunded':
@@ -482,14 +326,6 @@ function commerce_razorpay_refund_transaction($capture_transaction, $amount, $or
       $transaction = _commerce_razorpay_error_process($result, $transaction);
       break;
   }
-
-
-// if ($auth_transaction->amount == 0 ) {
-//     $auth_transaction->status = COMMERCE_PAYMENT_STATUS_SUCCESS;
-//   }
-
-//   commerce_payment_transaction_save($transaction);
-//   commerce_payment_transaction_save($auth_transaction);
 
   commerce_payment_transaction_save($transaction);
   return $return;
