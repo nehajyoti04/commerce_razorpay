@@ -132,31 +132,6 @@ function commerce_razorpay_commerce_payment_method_info() {
 }
 
 /**
- * Implements hook_commerce_checkout_pane_info().
- */
-// function commerce_razorpay_commerce_checkout_pane_info() {
-//   $checkout_panes = array();
-
-//   $checkout_panes['commerce_razorpay'] = array(
-//     'title' => t('Payment'),
-//     'page' => 'review',
-//     'file' => 'includes/commerce_payment.checkout_pane.inc',
-//     'base' => 'commerce_payment_pane',
-//     'weight' => 10,
-//   );
-
-//   $checkout_panes['commerce_razorpay_redirect'] = array(
-//     'title' => t('Off-site payment redirect'),
-//     'page' => 'payment',
-//     'locked' => TRUE,
-//     'file' => 'includes/commerce_payment.checkout_pane.inc',
-//     'base' => 'commerce_payment_redirect_pane',
-//   );
-
-//   return $checkout_panes;
-// }
-
-/**
  * Implements CALLBACK_commerce_payment_method_redirect_form().
  */
 function commerce_razorpay_redirect_form($form, &$form_state, $order, $payment_method) {
@@ -255,14 +230,7 @@ function commerce_razorpay_submit_form_submit($payment_method, $pane_form, $pane
 function commerce_razorpay_transaction($key_id, $key_secret, $order) {
 
   require 'libraries/razorpay-php/Razorpay.php';
-  // use Razorpay\Api\Api;
-  // $key_id = $payment_method['settings']['key_id'];
-  // $key_secret = $payment_method['settings']['key_secret'];
   $api = new Api($key_id, $key_secret);
-  // print '<pre>'; print_r("order"); print '</pre>';
-  // print '<pre>'; print_r($order); print '</pre>';
-  // print '<pre>'; print_r("payment method"); print '</pre>';
-  // print '<pre>'; print_r($payment_method); print '</pre>'; exit;
 
   // Need to store razorpay payment id in transaction .. this all is hit and trial.
 
@@ -322,16 +290,6 @@ function commerce_razorpay_transaction($key_id, $key_secret, $order) {
     $transaction->status = COMMERCE_PAYMENT_STATUS_FAILURE;
   }
   commerce_payment_transaction_save($transaction);
-
-
-
-
-  // print '<pre>'; print_r("payment method"); print '</pre>';
-  // print '<pre>'; print_r($payment_method); print '</pre>';
-  // print '<pre>'; print_r("order"); print '</pre>';
-  // print '<pre>'; print_r($order); print '</pre>';
-  // exit;
-
 
   // $card_details = $order->data['commerce_payment_example']['credit_card'];
 
@@ -403,28 +361,20 @@ $payment_settings = json_decode($_GET['payment_settings']);
 $payment = capture_payment($payment_id, $amount, $order_id, $payment_settings);
 
 $response = json_decode($_GET['response']);
-// print '<pre>'; print_r("payment settings"); print '</pre>';
-// print '<pre>'; print_r($payment_settings); print '</pre>';exit;
 
 $razorpay_signature = $response->razorpay_signature;
 $razorpay_payment_id = $response->razorpay_payment_id;
 $razorpay_order_id = $response->razorpay_order_id;
 $key_id = $payment_settings->key_id;
 $key_secret = $payment_settings->key_secret;
-// print '<pre>'; print_r("response"); print '</pre>';
-// print '<pre>'; print_r($response); print '</pre>';exit;
 
 $order = commerce_order_load($commerce_order_id);
-// print '<pre>'; print_r("order here"); print '</pre>';
-// print '<pre>'; print_r($order); print '</pre>';exit;
 $order->data['razorpay_payment_id'] = $payment_id;
 // $order->data['merchant_order_id'] = $razorpay_order_id;
 commerce_order_save($order);
 
 
 commerce_razorpay_transaction($key_id, $key_secret, $order);
-// print '<pre>'; print_r("order here"); print '</pre>';
-// print '<pre>'; print_r($order); print '</pre>';exit;
 // Send the customer on to the next checkout page.
 
 // hash_hmac('sha256', 'Message', 'secret', true);
@@ -438,89 +388,14 @@ $generated_signature = hash_hmac('sha256', $razorpay_order_id + "|" + $razorpay_
   if ($generated_signature == $razorpay_signature) {
     // payment is successful
   }
-
-
-      commerce_payment_redirect_pane_next_page($order, t('Customer successfully submitted payment at the payment gateway.'));
-      drupal_goto(commerce_checkout_order_uri($order));
+commerce_order_status_update($order, 'checkout_complete');
+// commerce_order_save($order);
+drupal_goto("checkout/".$commerce_order_id."/complete");
+//       // commerce_payment_redirect_pane_next_page($order, t('Customer successfully submitted payment at the payment gateway.'));
+      // drupal_goto(commerce_checkout_order_uri($order));
 
 
 }
-
-/**
- * Process a Void or Force transaction.
- *
- * @param $transaction
- *  The Transaction entity.
- * @param $payment_method
- *   The payment method instance array associated with this API request.
- * @param $amount
- *   Current transaction amount.
- * @param $action
- *   Transaction type, 'Void' or 'Force' supported.
- * @return bool
- *  Return TRUE on success.
- * @see TransactServices.svc/ProcessCreditCard (Transaction API Guide)
- */
-function commerce_razorpay_transaction_request($transaction, $payment_method, $amount, $action) {
-  // Action can be Void, Capture.
-  // Build the base profile request data.
-  $api_request_data = array(
-    'TransType' => $action,
-     // The PNRef number of the original sale transaction.
-    'PNRef' => $transaction->remote_id,
-    'Amount' => $amount,
-    'ExtData' => '<AuthCode>' . $transaction->data['auth_code']['0'] . '</AuthCode>',
-    'CardNum' => '',
-    'NameOnCard' => '',
-    'ExpDate' => '',
-    'Street' => '',
-    'Zip' => '',
-    'MagData' => '',
-    'InvNum' => '',
-    'CVNum' => '',
-  );
-  $payment_method['settings']['txn_payleap_type'] = $action == 'Void' ? PAYLEAP_TXN_TYPE_VOID : PAYLEAP_TXN_TYPE_FORCE;
-  $response = commerce_payleap_request($payment_method, $api_request_data);
-
-  $result = TRUE;
-  $transaction->payload[REQUEST_TIME] = isset($response['xml']) ? $response['xml']->asXML() : '';
-
-  // If we didn't get an approval response code...
-   if (!$response['status']) {
-    // Display an error message but leave the transaction pending.
-    drupal_set_message(t('PayLeap request failed'), 'error');
-    drupal_set_message(check_plain($response['msg']), 'error');
-    $result =  FALSE;
-   }
-   else {
-     drupal_set_message(t('@action request successfully.', array('@action' => $action)));
-     // Update to new remote ID.
-     $transaction->remote_id = isset($response['xml']->PNRef) ? (string) $response['xml']->PNRef : '';
-     // Update the transaction amount to the actual capture amount.
-     $transaction->data['auth_code'][] = isset($response['xml']) && isset($response['xml']->AuthCode) ? (string) $response['xml']->AuthCode : '';
-
-     if ($response['status']) {
-       // Set the remote and local status accordingly.
-       switch ($action) {
-         case 'Void':
-           $transaction->status = PAYLEAP_PAYMENT_STATUS_CANCELED;
-           break;
-         case 'Force':
-           $transaction->status = COMMERCE_PAYMENT_STATUS_SUCCESS;
-           break;
-       }
-       $transaction->amount = commerce_currency_decimal_to_amount($amount, $transaction->currency_code);
-     }
-     $transaction->remote_status = $response['status'];
-     $transaction->payload[REQUEST_TIME] = isset($response['xml']) ? $response['xml']->asXML() : '';
-
-     // Append a capture indication to the result message.
-     $transaction->message .= implode('<br />', commerce_payleap_get_log_message($response, $payment_method['settings']['txn_payleap_type']));
-   }
-   commerce_payment_transaction_save($transaction);
-   return $result;
-}
-
 
 /**
  * Determines access to the prior authorization capture form for Amex
