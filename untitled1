@@ -1,0 +1,65 @@
+(function($) {
+  Drupal.behaviors.commerce_razorpay = {
+    attach: function(context, settings) {
+
+      var amount = settings.commerce_razorpay.amount;
+      var key = settings.commerce_razorpay.key;
+      var logo = settings.commerce_razorpay.logo;
+      var merchant_order_id = settings.commerce_razorpay.order_id;
+      var commerce_order_id = settings.commerce_razorpay.commerce_order_id;
+      var payment_id = '';
+      var payment_settings = JSON.stringify(settings.commerce_razorpay.payment_settings);
+      var billing_address = settings.commerce_razorpay.billing_address;
+      var name = billing_address.first_name + " " + billing_address.last_name;
+      var address = name + " " + billing_address.thoroughfare + " " + billing_address.locality + " " + billing_address.sub_administrative_area + " " + billing_address.country;
+
+      var options = {
+        "key": key,
+        "amount": amount, // 100 paise = INR 1
+        "name": "Merchant Name",
+        "description": "Purchase Description",
+        "image": logo,
+        "order_id": merchant_order_id,
+        //  Pass phone number.
+        "handler": function(response) {
+
+
+          console.log(document.getElementById('razorpay-payment-id').value);
+          console.log(response.razorpay_payment_id);
+          document.getElementById('razorpay-payment-id').value = response.razorpay_payment_id;
+          // document.getElementById('razorpay_signature').value = response.razorpay_signature;
+
+          alert("before submitting");
+          // document.getElementById('commerce-razorpay-redirect-form').submit();
+
+          // document.razorpayform.submit();
+
+          // var payment_id = response.razorpay_payment_id;
+
+          window.location = '/capture-payment?payment_id=' + payment_id + '&amount=' + amount + '&order_id=' + commerce_order_id + '&payment_settings=' + payment_settings + '&response=' + JSON.stringify(response);
+          $('razor-payment-id').val(response.razorpay_payment_id);
+        },
+        "prefill": {
+          "name": name,
+          "email": "neha.jyoti@yahoo.com"
+        },
+        "notes": {
+          "address": address
+        },
+        "theme": {
+          "color": "#F37254"
+        }
+      };
+
+      var rzp1 = new Razorpay(options);
+      rzp1.open();
+
+      // document.getElementById("rzp-button1").onclick = function(e) {
+      //   alert("on click");
+      //   rzp1.open();
+      //   e.preventDefault();
+      // }
+
+    }
+  };
+}(jQuery));

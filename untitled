@@ -1,6 +1,6 @@
 <?php
 use Razorpay\Api\Api;
-use Razorpay\Api\Errors\SignatureVerificationError;
+
 /**
  * Implements hook_menu().
  */
@@ -22,6 +22,11 @@ function commerce_razorpay_menu() {
     'access callback' => TRUE,
   );
 
+  $items['razorpay-payment-verify'] = array(
+    'page callback' => 'commerce_razorpay_payment_verify',
+    'access callback' => TRUE,
+  );
+
   // Add a menu item for refunding authorizations.
   $items['admin/commerce/orders/%commerce_order/payment/%commerce_payment_transaction/razorpay-refund'] = array(
     'title' => 'Refund',
@@ -35,6 +40,10 @@ function commerce_razorpay_menu() {
     'file' => 'includes/commerce_razorpay.admin.inc',
   );
   return $items;
+}
+
+function commerce_razorpay_payment_verify() {
+
 }
 
 /**
@@ -87,6 +96,8 @@ function commerce_razorpay_commerce_payment_method_info() {
   return $payment_methods;
 }
 
+function commerce_razorpay_submit_form($form, &$form_state, $order, $payment_method) {
+}
 /**
  * Implements CALLBACK_commerce_payment_method_redirect_form().
  */
@@ -118,16 +129,16 @@ function commerce_razorpay_redirect_form($form, &$form_state, $order, $payment_m
   $form['help']['#markup'] = '<div class="checkout-help">' . t('Please wait while you are redirected to the payment server. If nothing happens within 10 seconds, please click on the button below.') . '</div>';
 
   $form['razor_payment_id'] = array(
-    '#attributes' => array('id' => 'razor-payment-id'),
+    '#attributes' => array('id' => 'razorpay-payment-id', 'name' => 'razorpay-payment-id'),
      '#type' => 'hidden',
      '#value' => '',
   );
 
-  $form['submit'] = array(
-    '#type' => 'submit',
-    '#id' => 'rzp-button1',
-    '#value' => t('Proceed to payment'),
-  );
+  // $form['submit'] = array(
+  //   '#type' => 'submit',
+  //   '#id' => 'rzp-button1',
+  //   '#value' => t('Proceed to payment'),
+  // );
   $form['#attached']['js'][] = "https://checkout.razorpay.com/v1/checkout.js";
 
   drupal_add_js(array('commerce_razorpay' => array('amount' => $amount, 'key' => $key_id, 'logo' => $base_url . "/" . drupal_get_path('module', 'commerce_razorpay') .'/logo.jpg', 'order_id' => $merchant_order_id, 'commerce_order_id' => $commerce_order_id, 'payment_settings' => $payment_method['settings'], 'billing_address' => $billing_address)), array('type' => 'setting'));
@@ -141,7 +152,22 @@ function commerce_razorpay_redirect_form($form, &$form_state, $order, $payment_m
     ),
   );
 
+
 }
+
+/**
+ * Payment method callback: redirect form submit.
+ */
+function commerce_razorpay_redirect_form_submit($order, $payment_method) {
+  print "inside"; exit;
+}
+// function commerce_razorpay_form_commerce_razorpay_redirect_form_alter($form_id, &$form) {
+//     // switch ($form_id) {
+//     //   case 'commerce_razorpay_redirect_form':
+//         $form['#action'] = '/razorpay-payment-verify';
+//         // break;
+//   // }
+// }
 
 /**
  * Creates an example payment transaction for the specified charge amount.
@@ -234,41 +260,23 @@ function commerce_razorpay_capture_payment($payment_id = '') {
 
   commerce_razorpay_transaction($key_id, $key_secret, $order);
   // Send the customer on to the next checkout page.
+  // @TODO validate  signatures.
+  // hash_hmac('sha256', 'Message', 'secret', true);
+  $generated_signature = hash_hmac('sha256', $razorpay_order_id + "|" + $razorpay_payment_id, $key_secret);
+  // $generated_signature = hmac_sha256($razorpay_order_id + "|" + $razorpay_payment_id, $secret);
 
-  // Validating  Signature.
-  $success = true;
-  $error = "Payment Failed";
-  if (empty($razorpay_payment_id) === false)
-  {
-    $api = new Api($key_id, $key_secret);
-    try
-    {
-      $attributes = array(
-          'razorpay_order_id' => $razorpay_order_id,
-          'razorpay_payment_id' => $razorpay_payment_id,
-          'razorpay_signature' => $razorpay_signature
-      );
-      $api->utility->verifyPaymentSignature($attributes);
-    }
-    catch(SignatureVerificationError $e)
-    {
-        $success = false;
-        $error = 'Razorpay Error : ' . $e->getMessage();
-    }
-  }
-  if ($success === true) {
-    $message = "Your payment was successful. Payment ID: {$razorpay_payment_id}";
 
+// print '<pre>'; print_r("response"); print '</pre>';
+// print '<pre>'; print_r($response); print '</pre>';
+// print '<pre>'; print_r("generated signature"); print '</pre>';
+// print '<pre>'; print_r($generated_signature); print '</pre>'; exit;
+
+    if ($generated_signature == $razorpay_signature) {
+      // payment is successful
+    }
     // DO not need to  save order after order_status_update because 3rd arg is by default FALSE.
-    commerce_order_status_update($order, 'checkout_complete');
-    drupal_set_message(t($message));
-    drupal_goto("checkout/".$commerce_order_id."/complete");
-  }
-  else {
-    $message = "Your payment failed. {$error}</p>";
-    drupal_set_message(t($error), 'error');
-    drupal_goto("checkout/" . $commerce_order_id . "/review");
-  }
+  commerce_order_status_update($order, 'checkout_complete');
+  drupal_goto("checkout/".$commerce_order_id."/complete");
 }
 
 /**
