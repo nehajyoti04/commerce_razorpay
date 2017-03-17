@@ -20,6 +20,7 @@
         "description": "Purchase Description",
         "image": logo,
         "order_id": merchant_order_id,
+        //  Pass phone number.
         "handler": function(response) {
 
           var payment_id = response.razorpay_payment_id;

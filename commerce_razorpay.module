@@ -19,7 +19,7 @@ function commerce_razorpay_menu() {
     'title' => 'Capture Payement',
     'description' => 'Adjust administration menu settings.',
     'page callback' => 'commerce_razorpay_capture_payment',
-    'access callback' => 'commerce_razorpay_refund_access',
+    'access callback' => TRUE,
   );
 
   // Add a menu item for refunding authorizations.
@@ -105,7 +105,7 @@ function commerce_razorpay_redirect_form($form, &$form_state, $order, $payment_m
 
   $currency = $wrapper->commerce_order_total->currency_code->value();
   $amount = $wrapper->commerce_order_total->amount->value();
-  $receipt = "test_1";
+  $receipt = $commerce_order_id;
   $payment_capture = false;
   $notes  = '';
 
@@ -238,6 +238,12 @@ function commerce_razorpay_capture_payment($payment_id = '') {
   // hash_hmac('sha256', 'Message', 'secret', true);
   $generated_signature = hash_hmac('sha256', $razorpay_order_id + "|" + $razorpay_payment_id, $key_secret);
   // $generated_signature = hmac_sha256($razorpay_order_id + "|" + $razorpay_payment_id, $secret);
+
+
+// print '<pre>'; print_r("response"); print '</pre>';
+// print '<pre>'; print_r($response); print '</pre>';
+// print '<pre>'; print_r("generated signature"); print '</pre>';
+// print '<pre>'; print_r($generated_signature); print '</pre>'; exit;
 
     if ($generated_signature == $razorpay_signature) {
       // payment is successful

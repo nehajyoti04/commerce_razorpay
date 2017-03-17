@@ -25,7 +25,11 @@ INSTALLATION
 CONFIGURATION
 -------------
 
-1.Extract the  zip file inside package folder and  place it in the path DRUPAL_ROOT/libraries.
+1.Extract the  zip file inside package folder and  place it in the path
+DRUPAL_ROOT/libraries. OR you can download razorpay-php zip file from this link
+https://github.com/razorpay/razorpay-php/releases/download/2.0.0/razorpay-php.zip
+i.e latest release 2.0.0 razorpay-php.zip file.
+
 1.2 Install the module.
 2. Go to payment setting under store
 2.1. enter the required keys provided to you by Razorpay.
