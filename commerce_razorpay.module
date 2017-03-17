@@ -19,7 +19,7 @@ function commerce_razorpay_menu() {
     'title' => 'Capture Payement',
     'description' => 'Adjust administration menu settings.',
     'page callback' => 'commerce_razorpay_capture_payment',
-    'access arguments' => array('administer site configuration'),
+    'access callback' => 'commerce_razorpay_refund_access',
   );
 
   // Add a menu item for refunding authorizations.
