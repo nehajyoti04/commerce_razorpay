@@ -92,6 +92,11 @@ function commerce_razorpay_commerce_payment_method_info() {
  */
 function commerce_razorpay_redirect_form($form, &$form_state, $order, $payment_method) {
   global $base_url;
+
+  if (empty($payment_method['settings']['key_id']) || empty($payment_method['settings']['key_secret'])) {
+    drupal_set_message(t('Razorpay has not been configured. The test account is used. Visit the <a href="!url">payment settings</a> to change this.', array('!url' => url('admin/commerce/config/payment-methods'))), 'warning');
+  }
+
   $wrapper = entity_metadata_wrapper('commerce_order', $order);
   $billing_address = $wrapper->commerce_customer_billing->commerce_customer_address->value();
   $commerce_order_id = $order->order_id;
