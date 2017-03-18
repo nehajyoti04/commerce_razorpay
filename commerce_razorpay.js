@@ -36,7 +36,9 @@
           "address": address
         },
         "theme": {
-          "color": "#F37254"
+          "color": "#F37254",
+          "emi_mode": true,
+
         }
       };
 
