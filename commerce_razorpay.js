@@ -23,9 +23,7 @@
         //  Pass phone number.
         "handler": function(response) {
 
-          var payment_id = response.razorpay_payment_id;
-
-          window.location = '/capture-payment?payment_id=' + payment_id + '&amount=' + amount + '&order_id=' + commerce_order_id + '&payment_settings=' + payment_settings + '&response=' + JSON.stringify(response);
+          window.location = '/capture-payment?amount=' + amount + '&order_id=' + commerce_order_id + '&payment_settings=' + payment_settings + '&response=' + JSON.stringify(response);
           $('razor-payment-id').val(response.razorpay_payment_id);
         },
         "prefill": {

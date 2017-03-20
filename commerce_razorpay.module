@@ -1,20 +1,13 @@
 <?php
+
 use Razorpay\Api\Api;
 use Razorpay\Api\Errors\SignatureVerificationError;
+
 /**
  * Implements hook_menu().
  */
 function commerce_razorpay_menu() {
-
-  $items['razorpay-checkout'] = array(
-    'title' => 'Administration menu',
-    'description' => 'Adjust administration menu settings.',
-    'page callback' => 'drupal_get_form',
-    'page arguments' => array('commerce_razorpay_checkout_form'),
-    'access arguments' => array('administer site configuration'),
-    'file' => 'commerce_razorpay.checkout.inc',
-  );
-
+  // Pseudo Url after payement data is entered to capture payment.
   $items['capture-payment'] = array(
     'title' => 'Capture Payement',
     'description' => 'Adjust administration menu settings.',
@@ -93,6 +86,7 @@ function commerce_razorpay_commerce_payment_method_info() {
 function commerce_razorpay_redirect_form($form, &$form_state, $order, $payment_method) {
   global $base_url;
 
+  // Error message to display when keys are not added in the payment method rules.
   if (empty($payment_method['settings']['key_id']) || empty($payment_method['settings']['key_secret'])) {
     drupal_set_message(t('Razorpay has not been configured. The test account is used. Visit the <a href="!url">payment settings</a> to change this.', array('!url' => url('admin/commerce/config/payment-methods'))), 'warning');
   }
@@ -173,7 +167,6 @@ function commerce_razorpay_transaction($key_id, $key_secret, $order) {
   //  @TODO Save Card details , method of payement etc.
 
   $transaction = commerce_payment_transaction_new('commerce_razorpay', $order->order_id);
-  // $transaction->instance_id = $payment_method['instance_id'];
   $transaction->instance_id = $order->data['payment_method_instance_id'];
   $transaction->amount = $amount;
   $transaction->currency_code = $currency;
@@ -181,7 +174,6 @@ function commerce_razorpay_transaction($key_id, $key_secret, $order) {
   // $transaction->remote_id = $txnid;
   $instance = explode('|', $transaction->instance_id);
   $transaction->payment_method = $instance[0];
-  // $transaction->message = '';
   //  @TODO Update transaction message .
   $transaction->message = 'Razorpay ....';
   $transaction->message_variables = '';
@@ -209,28 +201,23 @@ function commerce_razorpay_transaction($key_id, $key_secret, $order) {
 }
 
 
-function commerce_razorpay_capture_payment($payment_id = '') {
-  $payment_id = $_GET['payment_id'];
+function commerce_razorpay_capture_payment() {
   $amount = $_GET['amount'];
   $commerce_order_id = $_GET['order_id'];
-  $order_id = '';
   $payment_settings = json_decode($_GET['payment_settings']);
-
-  $payment = capture_payment($payment_id, $amount, $order_id, $payment_settings);
-
   $response = json_decode($_GET['response']);
-
   $razorpay_signature = $response->razorpay_signature;
   $razorpay_payment_id = $response->razorpay_payment_id;
   $razorpay_order_id = $response->razorpay_order_id;
   $key_id = $payment_settings->key_id;
   $key_secret = $payment_settings->key_secret;
 
+  $payment = capture_payment($razorpay_payment_id, $amount, $commerce_order_id, $payment_settings);
+  
   $order = commerce_order_load($commerce_order_id);
-  $order->data['razorpay_payment_id'] = $payment_id;
+  $order->data['razorpay_payment_id'] = $razorpay_payment_id;
   // $order->data['merchant_order_id'] = $razorpay_order_id;
   commerce_order_save($order);
-
 
   commerce_razorpay_transaction($key_id, $key_secret, $order);
   // Send the customer on to the next checkout page.
@@ -256,6 +243,8 @@ function commerce_razorpay_capture_payment($payment_id = '') {
         $error = 'Razorpay Error : ' . $e->getMessage();
     }
   }
+  // If Payment is successfully captured at razorpay end, then update
+  // commerce order status to checkout_complete and redirect page to complete.
   if ($success === true) {
     $message = "Your payment was successful. Payment ID: {$razorpay_payment_id}";
 
@@ -265,15 +254,14 @@ function commerce_razorpay_capture_payment($payment_id = '') {
     drupal_goto("checkout/".$commerce_order_id."/complete");
   }
   else {
-    $message = "Your payment failed. {$error}</p>";
-    drupal_set_message(t($error), 'error');
+    $message = "Your payment failed. {$error}";
+    drupal_set_message(t($message), 'error');
     drupal_goto("checkout/" . $commerce_order_id . "/review");
   }
 }
 
 /**
- * Determines access to the prior authorization capture form for Amex
- *   hosted credit card transactions.
+ * Determines access to the prior to transactions.
  *
  * @param $order
  *   The order the transaction is on.
@@ -397,10 +385,8 @@ function capture_payment($payment_id, $amount = '', $order_id = '', $payment_set
   $key_id = $payment_settings->key_id;
   $key_secret = $payment_settings->key_secret;
   $api = new Api($key_id, $key_secret);
-  $amount = $_GET['amount'];
   $payment = $api->payment->fetch($payment_id);
   $payment->capture(array('amount' => $amount));
-  $order_id = $_GET['order_id'];
   // Success URL: checkout/ORDER_ID/payment/return/ORDER_PAYMENT_REDIRECT_KEY
   // @TODO Redirect as per success and failure url.
   if($payment->status == 'authorized') {
