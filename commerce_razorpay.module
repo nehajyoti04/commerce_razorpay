@@ -2,6 +2,8 @@
 
 use Razorpay\Api\Api;
 use Razorpay\Api\Errors\SignatureVerificationError;
+include 'vendor/autoload.php';
+include 'libraries/razorpay-php/Razorpay.php';
 
 /**
  * Implements hook_menu().
@@ -148,8 +150,6 @@ function commerce_razorpay_redirect_form($form, &$form_state, $order, $payment_m
  *   An array indicating the amount and currency code to charge.
  */
 function commerce_razorpay_transaction($key_id, $key_secret, $order) {
-
-  require 'libraries/razorpay-php/Razorpay.php';
   $api = new Api($key_id, $key_secret);
 
   // Need to store razorpay payment id in transaction .. this all is hit and trial.
@@ -286,7 +286,6 @@ function commerce_razorpay_refund_access($order, $transaction) {
  */
 function commerce_razorpay_refund_transaction($capture_transaction, $amount, $order, $payment_method) {
   $return = FALSE;
-  require 'libraries/razorpay-php/Razorpay.php';
   $key_id = $payment_method['settings']['key_id'];
   $key_secret = $payment_method['settings']['key_secret'];
   $api = new Api($key_id, $key_secret);
@@ -373,7 +372,6 @@ function _commerce_razorpay_error_process($result, $transaction) {
  * @return [type] [description]
  */
 function razorpay_order($amount, $key_id, $key_secret, $currency, $receipt, $payment_capture, $notes = '') {
-  require 'libraries/razorpay-php/Razorpay.php';
   $api = new Api($key_id, $key_secret);
   $order = $api->order->create(array('amount' => $amount, "currency" => $currency, "receipt" => $receipt, 'payment_capture' => $payment_capture));
 
@@ -381,7 +379,6 @@ function razorpay_order($amount, $key_id, $key_secret, $currency, $receipt, $pay
 }
 
 function capture_payment($payment_id, $amount = '', $order_id = '', $payment_settings = '') {
-  require 'libraries/razorpay-php/Razorpay.php';
   $key_id = $payment_settings->key_id;
   $key_secret = $payment_settings->key_secret;
   $api = new Api($key_id, $key_secret);

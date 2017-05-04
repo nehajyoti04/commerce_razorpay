@@ -22,6 +22,14 @@ INSTALLATION
    https://drupal.org/documentation/install/modules-themes/modules-7
    for further information.
 
+ * Include : [require 'libraries/razorpay-php/Razorpay.php';] OR []
+ [include 'libraries/razorpay-php/Razorpay.php';] in commerce_razorpay.module file if install without composer
+
+ Installation with composer:
+ 1. Go to Module directory and run composer update.
+ 2. Instead of require 'libraries/razorpay-ph...' include : [include 'vendor/autoload.php'];
+ in commerce_razorpay.module file.
+
 CONFIGURATION
 -------------
 
